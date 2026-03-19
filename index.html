@@ -1,0 +1,1171 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>LiveList</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'><circle cx='8' cy='8' r='7' fill='%23e05c36'/></svg>">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #111214;
+    --surface: #1a1b1f;
+    --surface-raised: #222328;
+    --border: #2a2b31;
+    --border-hover: #3d3e46;
+    --text-primary: #e8e6e3;
+    --text-secondary: #8a8a8e;
+    --text-muted: #5c5c61;
+    --accent-live: #e05c36;
+    --accent-vault: #3b82c4;
+    --accent-flex: #8b6cc1;
+    --accent-dump: #5c5c61;
+    --accent-archive: #3a9a6b;
+    --accent-complete: #3a9a6b;
+    --danger: #c44040;
+    --radius: 5px;
+    --font: 'DM Sans', sans-serif;
+    --mono: 'JetBrains Mono', monospace;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: var(--font);
+    background: var(--bg);
+    color: var(--text-primary);
+    min-height: 100vh;
+    overflow-x: auto;
+  }
+
+  /* ── Header ── */
+  .header {
+    padding: 28px 32px 0;
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 16px;
+    flex-wrap: wrap;
+  }
+  .header-left { display: flex; flex-direction: column; gap: 4px; }
+  .logo {
+    font-size: 15px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--accent-live);
+    font-family: var(--mono);
+  }
+  .tagline {
+    font-size: 12px;
+    color: var(--text-muted);
+    letter-spacing: 0.02em;
+  }
+  .header-actions {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    flex-wrap: wrap;
+  }
+  .btn-header {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    color: var(--text-secondary);
+    font-family: var(--font);
+    font-size: 12px;
+    font-weight: 500;
+    padding: 6px 14px;
+    cursor: pointer;
+    transition: all 0.15s;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+  }
+  .btn-header:hover {
+    border-color: var(--border-hover);
+    color: var(--text-primary);
+    background: var(--surface-raised);
+  }
+  .btn-header svg { width: 13px; height: 13px; }
+  .btn-archive-toggle.active {
+    border-color: var(--accent-archive);
+    color: var(--accent-archive);
+  }
+
+  /* ── Sync status ── */
+  .sync-status {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 11px;
+    font-family: var(--mono);
+    color: var(--text-muted);
+    padding: 4px 10px;
+    border-radius: var(--radius);
+    background: var(--surface);
+    border: 1px solid var(--border);
+  }
+  .sync-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--text-muted);
+    transition: background 0.3s;
+  }
+  .sync-dot.connected { background: var(--accent-complete); }
+  .sync-dot.offline { background: var(--danger); }
+  .sync-dot.syncing { background: var(--accent-vault); animation: pulse 0.8s ease infinite; }
+  @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.3; } }
+
+  .save-flash {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    background: var(--surface-raised);
+    border: 1px solid var(--accent-complete);
+    color: var(--accent-complete);
+    font-size: 12px;
+    font-family: var(--mono);
+    padding: 6px 14px;
+    border-radius: var(--radius);
+    opacity: 0;
+    transform: translateY(6px);
+    transition: opacity 0.2s, transform 0.2s;
+    pointer-events: none;
+    z-index: 100;
+  }
+  .save-flash.visible { opacity: 1; transform: translateY(0); }
+
+  /* ── Board ── */
+  .board {
+    display: flex;
+    gap: 14px;
+    padding: 20px 32px 32px;
+    align-items: flex-start;
+    overflow-x: auto;
+  }
+
+  /* ── Column ── */
+  .column {
+    min-width: 272px;
+    max-width: 300px;
+    flex-shrink: 0;
+    display: flex;
+    flex-direction: column;
+  }
+  .column-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 0 4px 10px;
+  }
+  .column-indicator {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+  .col-live .column-indicator   { background: var(--accent-live); }
+  .col-vault .column-indicator  { background: var(--accent-vault); }
+  .col-flex .column-indicator   { background: var(--accent-flex); }
+  .col-dump .column-indicator   { background: var(--accent-dump); }
+  .col-archive .column-indicator { background: var(--accent-archive); }
+  .column-name {
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--text-secondary);
+  }
+  .column-count {
+    font-size: 11px;
+    font-family: var(--mono);
+    color: var(--text-muted);
+    margin-left: auto;
+  }
+  .column-body {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 6px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    min-height: 48px;
+    transition: border-color 0.15s, background 0.15s;
+  }
+  .column-body.drag-over {
+    border-color: var(--border-hover);
+    background: #1e1f24;
+  }
+
+  /* ── Card ── */
+  .card {
+    background: var(--surface-raised);
+    border: 1px solid transparent;
+    border-radius: var(--radius);
+    padding: 10px 12px;
+    cursor: grab;
+    transition: border-color 0.12s, opacity 0.15s, transform 0.15s;
+    position: relative;
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    touch-action: none;
+  }
+  .card:hover { border-color: var(--border-hover); }
+  .card:active { cursor: grabbing; }
+  .card.dragging { opacity: 0.3; transform: scale(0.97); }
+  .card.drop-preview {
+    border: 1px dashed var(--border-hover);
+    background: transparent;
+    min-height: 40px;
+    padding: 0;
+  }
+  .card.drop-preview * { visibility: hidden; }
+
+  .card-checkbox {
+    width: 15px;
+    height: 15px;
+    border: 1.5px solid var(--border-hover);
+    border-radius: 3px;
+    flex-shrink: 0;
+    cursor: pointer;
+    margin-top: 1px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.15s;
+    background: transparent;
+  }
+  .card-checkbox:hover {
+    border-color: var(--accent-complete);
+    background: rgba(58, 154, 107, 0.1);
+  }
+  .card-checkbox svg {
+    width: 10px; height: 10px;
+    opacity: 0;
+    color: var(--accent-complete);
+    transition: opacity 0.12s;
+  }
+  .card-checkbox:hover svg { opacity: 0.5; }
+
+  .card-content { flex: 1; min-width: 0; }
+  .card-title {
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text-primary);
+    line-height: 1.35;
+    word-break: break-word;
+  }
+  .card-desc {
+    font-size: 11.5px;
+    color: var(--text-secondary);
+    line-height: 1.4;
+    margin-top: 3px;
+    word-break: break-word;
+  }
+  .card-meta {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-top: 6px;
+  }
+  .card-tag {
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    font-family: var(--mono);
+    padding: 1px 6px;
+    border-radius: 3px;
+  }
+  .tag-hw    { background: rgba(224,92,54,0.15); color: var(--accent-live); }
+  .tag-sw    { background: rgba(59,130,196,0.15); color: var(--accent-vault); }
+  .tag-doc   { background: rgba(139,108,193,0.15); color: var(--accent-flex); }
+  .tag-admin { background: rgba(92,92,97,0.2); color: var(--text-secondary); }
+
+  .card-actions {
+    position: absolute;
+    top: 6px;
+    right: 6px;
+    display: flex;
+    gap: 2px;
+    opacity: 0;
+    transition: opacity 0.12s;
+  }
+  .card:hover .card-actions { opacity: 1; }
+  .card-action-btn {
+    background: none;
+    border: none;
+    color: var(--text-muted);
+    cursor: pointer;
+    padding: 2px 4px;
+    font-size: 13px;
+    line-height: 1;
+    border-radius: 3px;
+    transition: color 0.12s, background 0.12s;
+  }
+  .card-action-btn:hover { color: var(--text-primary); background: rgba(255,255,255,0.05); }
+  .card-action-btn.delete-btn:hover { color: var(--danger); }
+
+  /* Archive */
+  .col-archive .card { opacity: 0.6; cursor: default; }
+  .col-archive .card:hover { opacity: 0.8; }
+  .col-archive .card-checkbox { display: none; }
+  .col-archive .card-title { text-decoration: line-through; text-decoration-color: var(--text-muted); }
+  .col-archive .card-completed-date {
+    font-size: 10px;
+    font-family: var(--mono);
+    color: var(--text-muted);
+    margin-top: 4px;
+  }
+
+  /* ── Add card ── */
+  .add-card-trigger {
+    background: none;
+    border: none;
+    color: var(--text-muted);
+    font-family: var(--font);
+    font-size: 12px;
+    padding: 8px 4px;
+    cursor: pointer;
+    text-align: left;
+    transition: color 0.12s;
+    width: 100%;
+  }
+  .add-card-trigger:hover { color: var(--text-secondary); }
+
+  .add-form {
+    background: var(--surface-raised);
+    border: 1px solid var(--border-hover);
+    border-radius: var(--radius);
+    padding: 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+  .add-form input,
+  .add-form textarea {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    color: var(--text-primary);
+    font-family: var(--font);
+    font-size: 13px;
+    padding: 7px 10px;
+    outline: none;
+    transition: border-color 0.12s;
+    resize: vertical;
+  }
+  .add-form input:focus,
+  .add-form textarea:focus { border-color: var(--border-hover); }
+  .add-form textarea { min-height: 40px; font-size: 12px; }
+  .add-form select {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    color: var(--text-secondary);
+    font-family: var(--font);
+    font-size: 11px;
+    padding: 5px 8px;
+    outline: none;
+    cursor: pointer;
+  }
+  .form-row { display: flex; gap: 6px; }
+  .btn-add {
+    background: var(--accent-live);
+    border: none;
+    border-radius: var(--radius);
+    color: #fff;
+    font-family: var(--font);
+    font-size: 12px;
+    font-weight: 600;
+    padding: 6px 14px;
+    cursor: pointer;
+    transition: opacity 0.12s;
+  }
+  .btn-add:hover { opacity: 0.85; }
+  .btn-form-cancel {
+    background: none;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    color: var(--text-muted);
+    font-family: var(--font);
+    font-size: 12px;
+    padding: 6px 12px;
+    cursor: pointer;
+    transition: color 0.12s;
+  }
+  .btn-form-cancel:hover { color: var(--text-secondary); }
+
+  .card-edit-title {
+    background: var(--bg);
+    border: 1px solid var(--border-hover);
+    border-radius: 3px;
+    color: var(--text-primary);
+    font-family: var(--font);
+    font-size: 13px;
+    font-weight: 500;
+    padding: 3px 6px;
+    outline: none;
+    width: 100%;
+    resize: none;
+    line-height: 1.35;
+    min-height: 20px;
+  }
+
+  .empty-state {
+    font-size: 11px;
+    color: var(--text-muted);
+    text-align: center;
+    padding: 14px 8px;
+    font-style: italic;
+  }
+
+  /* ── Loading ── */
+  .loading-overlay {
+    position: fixed;
+    inset: 0;
+    background: var(--bg);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    gap: 12px;
+    z-index: 500;
+    transition: opacity 0.3s;
+  }
+  .loading-overlay.fade-out { opacity: 0; pointer-events: none; }
+  .loading-text {
+    font-family: var(--mono);
+    font-size: 13px;
+    color: var(--text-muted);
+  }
+  .loading-spinner {
+    width: 24px; height: 24px;
+    border: 2px solid var(--border);
+    border-top-color: var(--accent-live);
+    border-radius: 50%;
+    animation: spin 0.7s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* ── Confirm dialog ── */
+  .confirm-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.6);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 200;
+  }
+  .confirm-box {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 24px;
+    max-width: 360px;
+    width: 90%;
+  }
+  .confirm-box p {
+    font-size: 13px;
+    color: var(--text-primary);
+    margin-bottom: 16px;
+    line-height: 1.5;
+  }
+  .confirm-actions { display: flex; gap: 8px; justify-content: flex-end; }
+  .confirm-actions button {
+    font-family: var(--font);
+    font-size: 12px;
+    padding: 6px 16px;
+    border-radius: var(--radius);
+    cursor: pointer;
+    border: 1px solid var(--border);
+    background: var(--surface-raised);
+    color: var(--text-secondary);
+    transition: all 0.12s;
+  }
+  .confirm-actions button:hover { color: var(--text-primary); border-color: var(--border-hover); }
+  .confirm-actions .confirm-danger { background: var(--danger); border-color: var(--danger); color: #fff; }
+  .confirm-actions .confirm-danger:hover { opacity: 0.85; }
+
+  @media (max-width: 700px) {
+    .header { padding: 20px 16px 0; }
+    .board { padding: 16px; gap: 10px; }
+    .column { min-width: 250px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="loading-overlay" id="loading">
+  <div class="loading-spinner"></div>
+  <div class="loading-text">connecting...</div>
+</div>
+
+<div class="header">
+  <div class="header-left">
+    <div class="logo">LiveList</div>
+    <div class="tagline">Live &middot; Vault &middot; Flex &middot; Dump</div>
+  </div>
+  <div class="header-actions">
+    <div class="sync-status" id="sync-status">
+      <div class="sync-dot" id="sync-dot"></div>
+      <span id="sync-text">offline</span>
+    </div>
+    <button class="btn-header btn-archive-toggle" onclick="toggleArchive()" title="Toggle archive">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 8v13H3V8M1 3h22v5H1zM10 12h4"/></svg>
+      Archive
+    </button>
+    <button class="btn-header" onclick="exportData()" title="Export JSON">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>
+      Export
+    </button>
+    <button class="btn-header" onclick="importData()" title="Import JSON">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M17 8l-5-5-5 5M12 3v12"/></svg>
+      Import
+    </button>
+    <button class="btn-header" onclick="confirmClearAll()" title="Clear all">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/></svg>
+      Clear
+    </button>
+  </div>
+</div>
+
+<div class="save-flash" id="save-flash">synced</div>
+<div class="board" id="board"></div>
+<input type="file" id="import-input" accept=".json" style="display:none">
+
+<!-- ═══════════════════════════════════════════════════
+     FIREBASE SDK (compat v9 — single-file friendly)
+     ═══════════════════════════════════════════════════ -->
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+
+<script>
+// ╔═══════════════════════════════════════════════════════╗
+// ║  PASTE YOUR FIREBASE CONFIG BELOW                     ║
+// ╚═══════════════════════════════════════════════════════╝
+var firebaseConfig = {
+  apiKey:            "YOUR_API_KEY",
+  authDomain:        "YOUR_PROJECT.firebaseapp.com",
+  projectId:         "YOUR_PROJECT_ID",
+  storageBucket:     "YOUR_PROJECT.appspot.com",
+  messagingSenderId: "YOUR_SENDER_ID",
+  appId:             "YOUR_APP_ID"
+};
+// ╔═══════════════════════════════════════════════════════╗
+// ║  END CONFIG                                           ║
+// ╚═══════════════════════════════════════════════════════╝
+
+firebase.initializeApp(firebaseConfig);
+var auth = firebase.auth();
+var db   = firebase.firestore();
+
+// Enable offline persistence so it works without network
+db.enablePersistence({ synchronizeTabs: true }).catch(function(err) {
+  console.warn('Firestore persistence unavailable:', err.code);
+});
+
+(function() {
+  var LOCAL_KEY = 'livelist-data';
+  var COLUMNS = [
+    { id: 'live',    name: 'Live',    accent: 'live',    empty: 'What are you working on right now?' },
+    { id: 'vault',   name: 'Vault',   accent: 'vault',   empty: 'Queued up and waiting.' },
+    { id: 'flex',    name: 'Flex',    accent: 'flex',    empty: 'Optional, if time allows.' },
+    { id: 'dump',    name: 'Dump',    accent: 'dump',    empty: 'Abandoned ideas rest here.' },
+    { id: 'archive', name: 'Archive', accent: 'archive', empty: 'Completed tasks land here.' },
+  ];
+  var TAGS = [
+    { value: 'hw',    label: 'HW',    cls: 'tag-hw' },
+    { value: 'sw',    label: 'SW',    cls: 'tag-sw' },
+    { value: 'doc',   label: 'Doc',   cls: 'tag-doc' },
+    { value: 'admin', label: 'Admin', cls: 'tag-admin' },
+  ];
+
+  var draggedCard = null;
+  var archiveVisible = false;
+  var data = defaultData();
+  var userId = null;
+  var unsubscribe = null;     // Firestore listener
+  var suppressRemote = false; // Prevent echo after local write
+
+  function defaultData() {
+    return { live: [], vault: [], flex: [], dump: [], archive: [] };
+  }
+
+  // ── Sync status UI ──
+  function setSyncStatus(state, text) {
+    var dot = document.getElementById('sync-dot');
+    var txt = document.getElementById('sync-text');
+    dot.className = 'sync-dot ' + state;
+    txt.textContent = text;
+  }
+
+  function flashSave() {
+    var el = document.getElementById('save-flash');
+    el.classList.add('visible');
+    clearTimeout(el._t);
+    el._t = setTimeout(function() { el.classList.remove('visible'); }, 1200);
+  }
+
+  // ── Local storage fallback ──
+  function saveLocal() {
+    try { localStorage.setItem(LOCAL_KEY, JSON.stringify(data)); } catch(e) {}
+  }
+  function loadLocal() {
+    try {
+      var raw = localStorage.getItem(LOCAL_KEY);
+      if (raw) {
+        var d = JSON.parse(raw);
+        COLUMNS.forEach(function(c) { if (!d[c.id]) d[c.id] = []; });
+        return d;
+      }
+    } catch(e) {}
+    return null;
+  }
+
+  // ── Firestore doc ref for this user ──
+  function docRef() {
+    return db.collection('livelist').doc(userId);
+  }
+
+  // ── Save: write to Firestore + localStorage ──
+  function saveData() {
+    saveLocal();
+    if (userId) {
+      suppressRemote = true;
+      setSyncStatus('syncing', 'syncing');
+      docRef().set({
+        columns: data,
+        updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+      }).then(function() {
+        setSyncStatus('connected', 'synced');
+        flashSave();
+        setTimeout(function() { suppressRemote = false; }, 500);
+      }).catch(function(err) {
+        console.error('Save failed:', err);
+        setSyncStatus('offline', 'save error');
+        suppressRemote = false;
+      });
+    } else {
+      flashSave();
+    }
+  }
+
+  // ── Listen for real-time changes (other devices) ──
+  function startListener() {
+    if (unsubscribe) unsubscribe();
+    unsubscribe = docRef().onSnapshot(function(snap) {
+      if (suppressRemote) return;
+      if (snap.exists && snap.data().columns) {
+        var remote = snap.data().columns;
+        COLUMNS.forEach(function(c) { if (!remote[c.id]) remote[c.id] = []; });
+        data = remote;
+        saveLocal();
+        render();
+        setSyncStatus('connected', 'synced');
+      }
+    }, function(err) {
+      console.error('Listener error:', err);
+      setSyncStatus('offline', 'disconnected');
+    });
+  }
+
+  // ── Auth + init ──
+  auth.signInAnonymously().catch(function(err) {
+    console.error('Auth failed:', err);
+    setSyncStatus('offline', 'auth error');
+  });
+
+  auth.onAuthStateChanged(function(user) {
+    var loader = document.getElementById('loading');
+    if (user) {
+      userId = user.uid;
+
+      // Check if Firestore has existing data
+      docRef().get().then(function(snap) {
+        if (snap.exists && snap.data().columns) {
+          data = snap.data().columns;
+          COLUMNS.forEach(function(c) { if (!data[c.id]) data[c.id] = []; });
+          saveLocal();
+        } else {
+          // First time: check if localStorage has data to migrate
+          var local = loadLocal();
+          if (local) {
+            data = local;
+            // Push local data to Firestore
+            docRef().set({
+              columns: data,
+              updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+            });
+          }
+        }
+        setSyncStatus('connected', 'synced');
+        render();
+        loader.classList.add('fade-out');
+        setTimeout(function() { loader.style.display = 'none'; }, 300);
+
+        // Start real-time listener
+        startListener();
+      }).catch(function(err) {
+        // Offline — load from local
+        console.warn('Firestore fetch failed, using local:', err);
+        var local = loadLocal();
+        if (local) data = local;
+        setSyncStatus('offline', 'offline');
+        render();
+        loader.classList.add('fade-out');
+        setTimeout(function() { loader.style.display = 'none'; }, 300);
+        startListener();
+      });
+    } else {
+      // No user — offline mode
+      var local = loadLocal();
+      if (local) data = local;
+      setSyncStatus('offline', 'offline');
+      render();
+      loader.classList.add('fade-out');
+      setTimeout(function() { loader.style.display = 'none'; }, 300);
+    }
+  });
+
+  // ── Render ──
+  function render() {
+    var board = document.getElementById('board');
+    board.innerHTML = '';
+    COLUMNS.forEach(function(colDef) {
+      if (colDef.id === 'archive' && !archiveVisible) return;
+      var col = document.createElement('div');
+      col.className = 'column col-' + colDef.accent;
+
+      var header = document.createElement('div');
+      header.className = 'column-header';
+      header.innerHTML = '<div class="column-indicator"></div>' +
+        '<span class="column-name">' + colDef.name + '</span>' +
+        '<span class="column-count">' + data[colDef.id].length + '</span>';
+      col.appendChild(header);
+
+      var body = document.createElement('div');
+      body.className = 'column-body';
+      body.dataset.column = colDef.id;
+
+      var cards = data[colDef.id];
+      if (cards.length === 0 && colDef.id !== 'archive') {
+        var empty = document.createElement('div');
+        empty.className = 'empty-state';
+        empty.textContent = colDef.empty;
+        body.appendChild(empty);
+      }
+
+      cards.forEach(function(cardData, idx) {
+        body.appendChild(buildCard(cardData, colDef.id, idx));
+      });
+
+      if (colDef.id !== 'archive') {
+        var addBtn = document.createElement('button');
+        addBtn.className = 'add-card-trigger';
+        addBtn.textContent = '+ Add task';
+        addBtn.addEventListener('click', function() { showAddForm(body, colDef.id, addBtn); });
+        body.appendChild(addBtn);
+      }
+
+      if (cards.length === 0 && colDef.id === 'archive') {
+        var empty2 = document.createElement('div');
+        empty2.className = 'empty-state';
+        empty2.textContent = colDef.empty;
+        body.appendChild(empty2);
+      }
+
+      col.appendChild(body);
+      board.appendChild(col);
+      setupDropZone(body, colDef.id);
+    });
+  }
+
+  function buildCard(cardData, colId, idx) {
+    var card = document.createElement('div');
+    card.className = 'card';
+    card.draggable = (colId !== 'archive');
+    card.dataset.col = colId;
+    card.dataset.idx = idx;
+
+    if (colId !== 'archive') {
+      var cb = document.createElement('div');
+      cb.className = 'card-checkbox';
+      cb.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M5 13l4 4L19 7"/></svg>';
+      cb.addEventListener('click', function(e) { e.stopPropagation(); completeTask(colId, idx); });
+      card.appendChild(cb);
+    }
+
+    var content = document.createElement('div');
+    content.className = 'card-content';
+
+    var title = document.createElement('div');
+    title.className = 'card-title';
+    title.textContent = cardData.title;
+    content.appendChild(title);
+
+    if (cardData.desc) {
+      var desc = document.createElement('div');
+      desc.className = 'card-desc';
+      desc.textContent = cardData.desc;
+      content.appendChild(desc);
+    }
+
+    if (colId === 'archive' && cardData.completedAt) {
+      var dateEl = document.createElement('div');
+      dateEl.className = 'card-completed-date';
+      dateEl.textContent = formatDate(cardData.completedAt);
+      content.appendChild(dateEl);
+    }
+
+    var meta = document.createElement('div');
+    meta.className = 'card-meta';
+    if (cardData.tag) {
+      var tagInfo = TAGS.find(function(t) { return t.value === cardData.tag; });
+      if (tagInfo) {
+        var tagEl = document.createElement('span');
+        tagEl.className = 'card-tag ' + tagInfo.cls;
+        tagEl.textContent = tagInfo.label;
+        meta.appendChild(tagEl);
+      }
+    }
+    if (meta.children.length) content.appendChild(meta);
+    card.appendChild(content);
+
+    // Actions
+    var actions = document.createElement('div');
+    actions.className = 'card-actions';
+
+    if (colId !== 'archive') {
+      var editBtn = document.createElement('button');
+      editBtn.className = 'card-action-btn';
+      editBtn.innerHTML = '&#9998;';
+      editBtn.title = 'Edit';
+      editBtn.addEventListener('click', function(e) { e.stopPropagation(); editCard(colId, idx); });
+      actions.appendChild(editBtn);
+    } else {
+      var restoreBtn = document.createElement('button');
+      restoreBtn.className = 'card-action-btn';
+      restoreBtn.innerHTML = '&#8634;';
+      restoreBtn.title = 'Restore to Live';
+      restoreBtn.addEventListener('click', function(e) { e.stopPropagation(); restoreCard(idx); });
+      actions.appendChild(restoreBtn);
+    }
+
+    var delBtn = document.createElement('button');
+    delBtn.className = 'card-action-btn delete-btn';
+    delBtn.innerHTML = '&times;';
+    delBtn.title = 'Delete';
+    delBtn.addEventListener('click', function(e) { e.stopPropagation(); deleteCard(colId, idx); });
+    actions.appendChild(delBtn);
+
+    card.appendChild(actions);
+
+    // Drag
+    if (colId !== 'archive') {
+      card.addEventListener('dragstart', function(e) {
+        draggedCard = { col: colId, idx: idx };
+        card.classList.add('dragging');
+        e.dataTransfer.effectAllowed = 'move';
+        e.dataTransfer.setData('text/plain', '');
+      });
+      card.addEventListener('dragend', function() {
+        card.classList.remove('dragging');
+        draggedCard = null;
+        document.querySelectorAll('.column-body').forEach(function(b) { b.classList.remove('drag-over'); });
+        document.querySelectorAll('.drop-preview').forEach(function(p) { p.remove(); });
+      });
+
+      // Touch drag support for mobile
+      var touchStartY = 0, touchStartX = 0, touchClone = null, touchMoved = false;
+      card.addEventListener('touchstart', function(e) {
+        touchMoved = false;
+        var t = e.touches[0];
+        touchStartX = t.clientX;
+        touchStartY = t.clientY;
+      }, { passive: true });
+
+      card.addEventListener('touchmove', function(e) {
+        var t = e.touches[0];
+        var dx = Math.abs(t.clientX - touchStartX);
+        var dy = Math.abs(t.clientY - touchStartY);
+        if (!touchMoved && (dx > 8 || dy > 8)) {
+          touchMoved = true;
+          draggedCard = { col: colId, idx: idx };
+          card.classList.add('dragging');
+        }
+        if (touchMoved) {
+          e.preventDefault();
+          // Highlight target column
+          var el = document.elementFromPoint(t.clientX, t.clientY);
+          var targetBody = el ? el.closest('.column-body') : null;
+          document.querySelectorAll('.column-body').forEach(function(b) { b.classList.remove('drag-over'); });
+          if (targetBody && targetBody.dataset.column !== 'archive') targetBody.classList.add('drag-over');
+        }
+      }, { passive: false });
+
+      card.addEventListener('touchend', function(e) {
+        if (!touchMoved || !draggedCard) {
+          card.classList.remove('dragging');
+          draggedCard = null;
+          return;
+        }
+        card.classList.remove('dragging');
+        var t = e.changedTouches[0];
+        var el = document.elementFromPoint(t.clientX, t.clientY);
+        var targetBody = el ? el.closest('.column-body') : null;
+        document.querySelectorAll('.column-body').forEach(function(b) { b.classList.remove('drag-over'); });
+
+        if (targetBody && targetBody.dataset.column !== 'archive') {
+          var toCol = targetBody.dataset.column;
+          var dropIdx = getDropIndex(targetBody, t.clientY);
+          var fromCol = draggedCard.col;
+          var fromIdx = draggedCard.idx;
+          var item = data[fromCol].splice(fromIdx, 1)[0];
+          if (fromCol === toCol && fromIdx < dropIdx) dropIdx--;
+          data[toCol].splice(dropIdx, 0, item);
+          saveData();
+          render();
+        }
+        draggedCard = null;
+      });
+    }
+
+    return card;
+  }
+
+  function setupDropZone(body, colId) {
+    if (colId === 'archive') return;
+    body.addEventListener('dragover', function(e) {
+      e.preventDefault();
+      if (!draggedCard) return;
+      e.dataTransfer.dropEffect = 'move';
+      body.classList.add('drag-over');
+      document.querySelectorAll('.drop-preview').forEach(function(p) { p.remove(); });
+      var afterIdx = getDropIndex(body, e.clientY);
+      var ph = document.createElement('div');
+      ph.className = 'card drop-preview';
+      ph.style.height = '36px';
+      var realCards = body.querySelectorAll('.card:not(.dragging):not(.drop-preview)');
+      if (afterIdx >= realCards.length) {
+        var trigger = body.querySelector('.add-card-trigger');
+        if (trigger) body.insertBefore(ph, trigger);
+        else body.appendChild(ph);
+      } else {
+        body.insertBefore(ph, realCards[afterIdx]);
+      }
+    });
+    body.addEventListener('dragleave', function(e) {
+      if (!body.contains(e.relatedTarget)) {
+        body.classList.remove('drag-over');
+        body.querySelectorAll('.drop-preview').forEach(function(p) { p.remove(); });
+      }
+    });
+    body.addEventListener('drop', function(e) {
+      e.preventDefault();
+      body.classList.remove('drag-over');
+      body.querySelectorAll('.drop-preview').forEach(function(p) { p.remove(); });
+      if (!draggedCard) return;
+      var fromCol = draggedCard.col;
+      var fromIdx = draggedCard.idx;
+      var toCol = colId;
+      var dropIdx = getDropIndex(body, e.clientY);
+      var item = data[fromCol].splice(fromIdx, 1)[0];
+      if (fromCol === toCol && fromIdx < dropIdx) dropIdx--;
+      data[toCol].splice(dropIdx, 0, item);
+      draggedCard = null;
+      saveData();
+      render();
+    });
+  }
+
+  function getDropIndex(container, y) {
+    var cards = container.querySelectorAll('.card:not(.dragging):not(.drop-preview)');
+    for (var i = 0; i < cards.length; i++) {
+      var box = cards[i].getBoundingClientRect();
+      if (y < box.top + box.height / 2) return i;
+    }
+    return cards.length;
+  }
+
+  function completeTask(colId, idx) {
+    var item = data[colId].splice(idx, 1)[0];
+    item.completedAt = new Date().toISOString();
+    data.archive.unshift(item);
+    saveData();
+    render();
+  }
+
+  function restoreCard(idx) {
+    var item = data.archive.splice(idx, 1)[0];
+    delete item.completedAt;
+    data.live.unshift(item);
+    saveData();
+    render();
+  }
+
+  function deleteCard(colId, idx) {
+    data[colId].splice(idx, 1);
+    saveData();
+    render();
+  }
+
+  function editCard(colId, idx) {
+    var cardData = data[colId][idx];
+    var cardEls = document.querySelectorAll('.column-body[data-column="' + colId + '"] .card:not(.drop-preview)');
+    var cardEl = cardEls[idx];
+    if (!cardEl) return;
+    var titleEl = cardEl.querySelector('.card-title');
+    var origTitle = cardData.title;
+    var input = document.createElement('textarea');
+    input.className = 'card-edit-title';
+    input.value = origTitle;
+    input.rows = 1;
+    titleEl.replaceWith(input);
+    input.focus();
+    input.select();
+    function resize() { input.style.height = 'auto'; input.style.height = input.scrollHeight + 'px'; }
+    resize();
+    input.addEventListener('input', resize);
+    function save() {
+      var val = input.value.trim();
+      if (val) cardData.title = val;
+      saveData();
+      render();
+    }
+    input.addEventListener('blur', save);
+    input.addEventListener('keydown', function(e) {
+      if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); save(); }
+      if (e.key === 'Escape') { cardData.title = origTitle; render(); }
+    });
+  }
+
+  function showAddForm(body, colId, triggerBtn) {
+    if (body.querySelector('.add-form')) return;
+    triggerBtn.style.display = 'none';
+    var emptyEl = body.querySelector('.empty-state');
+    if (emptyEl) emptyEl.remove();
+
+    var form = document.createElement('div');
+    form.className = 'add-form';
+    var inp = document.createElement('input');
+    inp.type = 'text'; inp.placeholder = 'Task name';
+    var ta = document.createElement('textarea');
+    ta.placeholder = 'Details (optional)';
+
+    var row = document.createElement('div');
+    row.className = 'form-row';
+    var sel = document.createElement('select');
+    var emptyOpt = document.createElement('option');
+    emptyOpt.value = ''; emptyOpt.textContent = 'Tag';
+    sel.appendChild(emptyOpt);
+    TAGS.forEach(function(t) {
+      var opt = document.createElement('option');
+      opt.value = t.value; opt.textContent = t.label;
+      sel.appendChild(opt);
+    });
+
+    var addB = document.createElement('button');
+    addB.className = 'btn-add'; addB.textContent = 'Add';
+    var cancelB = document.createElement('button');
+    cancelB.className = 'btn-form-cancel'; cancelB.textContent = 'Cancel';
+    row.appendChild(sel); row.appendChild(addB); row.appendChild(cancelB);
+    form.appendChild(inp); form.appendChild(ta); form.appendChild(row);
+    body.insertBefore(form, triggerBtn);
+    inp.focus();
+
+    function close() { form.remove(); triggerBtn.style.display = ''; render(); }
+    function submit() {
+      var title = inp.value.trim();
+      if (!title) { inp.focus(); return; }
+      data[colId].push({
+        id: 't-' + Date.now() + '-' + Math.random().toString(36).substr(2, 5),
+        title: title,
+        desc: ta.value.trim(),
+        tag: sel.value,
+        createdAt: new Date().toISOString(),
+      });
+      saveData();
+      render();
+    }
+    addB.addEventListener('click', submit);
+    cancelB.addEventListener('click', close);
+    inp.addEventListener('keydown', function(e) {
+      if (e.key === 'Enter') submit();
+      if (e.key === 'Escape') close();
+    });
+    ta.addEventListener('keydown', function(e) { if (e.key === 'Escape') close(); });
+  }
+
+  window.toggleArchive = function() {
+    archiveVisible = !archiveVisible;
+    document.querySelector('.btn-archive-toggle').classList.toggle('active', archiveVisible);
+    render();
+  };
+
+  window.exportData = function() {
+    var json = JSON.stringify(data, null, 2);
+    var blob = new Blob([json], { type: 'application/json' });
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement('a');
+    a.href = url;
+    a.download = 'livelist-' + new Date().toISOString().slice(0, 10) + '.json';
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  window.importData = function() { document.getElementById('import-input').click(); };
+  document.getElementById('import-input').addEventListener('change', function(e) {
+    var file = e.target.files[0];
+    if (!file) return;
+    var reader = new FileReader();
+    reader.onload = function(ev) {
+      try {
+        var imported = JSON.parse(ev.target.result);
+        COLUMNS.forEach(function(c) { if (!imported[c.id]) imported[c.id] = []; });
+        data = imported;
+        saveData();
+        render();
+      } catch(err) { alert('Invalid JSON file.'); }
+    };
+    reader.readAsText(file);
+    e.target.value = '';
+  });
+
+  window.confirmClearAll = function() {
+    showConfirm('This will permanently delete all tasks across every column. Continue?', function() {
+      data = defaultData();
+      saveData();
+      render();
+    });
+  };
+
+  function showConfirm(msg, onConfirm) {
+    var overlay = document.createElement('div');
+    overlay.className = 'confirm-overlay';
+    var box = document.createElement('div');
+    box.className = 'confirm-box';
+    box.innerHTML = '<p>' + msg + '</p><div class="confirm-actions">' +
+      '<button class="confirm-cancel">Cancel</button>' +
+      '<button class="confirm-danger">Delete All</button></div>';
+    overlay.appendChild(box);
+    document.body.appendChild(overlay);
+    box.querySelector('.confirm-cancel').addEventListener('click', function() { overlay.remove(); });
+    box.querySelector('.confirm-danger').addEventListener('click', function() { overlay.remove(); onConfirm(); });
+    overlay.addEventListener('click', function(e) { if (e.target === overlay) overlay.remove(); });
+  }
+
+  function formatDate(iso) {
+    var d = new Date(iso);
+    var m = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+    return m[d.getMonth()] + ' ' + d.getDate() + ', ' + d.getFullYear();
+  }
+})();
+</script>
+
+</body>
+</html>

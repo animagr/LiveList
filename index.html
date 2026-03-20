@@ -1,0 +1,1776 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>LiveList</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #111214;
+    --surface: #1a1b1f;
+    --surface-raised: #222328;
+    --border: #2a2b31;
+    --border-hover: #3d3e46;
+    --text-primary: #e8e6e3;
+    --text-secondary: #8a8a8e;
+    --text-muted: #5c5c61;
+    --accent-live: #e05c36;
+    --accent-vault: #3b82c4;
+    --accent-flex: #8b6cc1;
+    --accent-dump: #5c5c61;
+    --accent-archive: #3a9a6b;
+    --accent-complete: #3a9a6b;
+    --danger: #c44040;
+    --radius: 5px;
+    --font: 'DM Sans', sans-serif;
+    --mono: 'JetBrains Mono', monospace;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: var(--font);
+    background: var(--bg);
+    color: var(--text-primary);
+    min-height: 100vh;
+    overflow-x: auto;
+  }
+
+  /* ── Header ── */
+  .header {
+    padding: 28px 32px 0;
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 16px;
+    flex-wrap: wrap;
+  }
+  .header-left { display: flex; flex-direction: column; gap: 4px; }
+  .logo {
+    font-size: 15px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--accent-live);
+    font-family: var(--mono);
+  }
+  .tagline {
+    font-size: 12px;
+    color: var(--text-muted);
+    letter-spacing: 0.02em;
+  }
+  .header-actions {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    flex-wrap: wrap;
+  }
+  .btn-header {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    color: var(--text-secondary);
+    font-family: var(--font);
+    font-size: 12px;
+    font-weight: 500;
+    padding: 6px 14px;
+    cursor: pointer;
+    transition: all 0.15s;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+  }
+  .btn-header:hover {
+    border-color: var(--border-hover);
+    color: var(--text-primary);
+    background: var(--surface-raised);
+  }
+  .btn-header svg { width: 13px; height: 13px; }
+  .btn-archive-toggle.active {
+    border-color: var(--accent-archive);
+    color: var(--accent-archive);
+  }
+
+  /* ── Sync status ── */
+  .sync-bar {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 11px;
+    font-family: var(--mono);
+    color: var(--text-muted);
+    padding: 4px 10px;
+    border-radius: var(--radius);
+    background: var(--surface);
+    border: 1px solid var(--border);
+    cursor: default;
+  }
+  .sync-dot {
+    width: 6px; height: 6px; border-radius: 50%;
+    background: var(--text-muted);
+    transition: background 0.3s;
+    flex-shrink: 0;
+  }
+  .sync-dot.ok   { background: var(--accent-complete); }
+  .sync-dot.busy { background: var(--accent-vault); animation: pulse 0.8s ease infinite; }
+  .sync-dot.err  { background: var(--danger); }
+  .sync-dot.off  { background: var(--text-muted); }
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.3} }
+
+  /* ── Setup overlay ── */
+  .setup-overlay {
+    position: fixed; inset: 0;
+    background: var(--bg);
+    display: flex; align-items: center; justify-content: center;
+    z-index: 500;
+  }
+  .setup-box {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 32px;
+    max-width: 440px;
+    width: 90%;
+  }
+  .setup-box h2 {
+    font-family: var(--mono);
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--accent-live);
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    margin-bottom: 6px;
+  }
+  .setup-box p {
+    font-size: 12px;
+    color: var(--text-secondary);
+    line-height: 1.6;
+    margin-bottom: 16px;
+  }
+  .setup-box p a {
+    color: var(--accent-vault);
+    text-decoration: none;
+  }
+  .setup-box p a:hover { text-decoration: underline; }
+  .setup-box label {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    display: block;
+    margin-bottom: 4px;
+    margin-top: 12px;
+  }
+  .setup-box input[type="text"] {
+    width: 100%;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    color: var(--text-primary);
+    font-family: var(--mono);
+    font-size: 12px;
+    padding: 8px 10px;
+    outline: none;
+  }
+  .setup-box input[type="text"]:focus { border-color: var(--border-hover); }
+  .setup-box .setup-hint {
+    font-size: 10px;
+    color: var(--text-muted);
+    margin-top: 3px;
+  }
+  .setup-actions {
+    display: flex; gap: 8px;
+    margin-top: 20px;
+  }
+  .setup-actions button {
+    font-family: var(--font);
+    font-size: 12px;
+    font-weight: 600;
+    padding: 8px 18px;
+    border-radius: var(--radius);
+    cursor: pointer;
+    border: none;
+    transition: opacity 0.12s;
+  }
+  .setup-save {
+    background: var(--accent-live);
+    color: #fff;
+  }
+  .setup-save:hover { opacity: 0.85; }
+  .setup-skip {
+    background: var(--surface-raised);
+    border: 1px solid var(--border) !important;
+    color: var(--text-muted);
+  }
+  .setup-skip:hover { color: var(--text-secondary); }
+  .setup-error {
+    color: var(--danger);
+    font-size: 11px;
+    margin-top: 8px;
+    min-height: 16px;
+  }
+
+  /* ── Export unsaved indicator ── */
+  .btn-export.has-changes {
+    border-color: var(--accent-live);
+    color: var(--accent-live);
+  }
+  .btn-export .export-badge {
+    display: none;
+    font-size: 10px;
+    font-family: var(--mono);
+    background: var(--accent-live);
+    color: #fff;
+    border-radius: 8px;
+    padding: 0 5px;
+    line-height: 16px;
+    min-width: 16px;
+    text-align: center;
+  }
+  .btn-export.has-changes .export-badge {
+    display: inline-block;
+  }
+
+  .save-flash {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    background: var(--surface-raised);
+    border: 1px solid var(--accent-complete);
+    color: var(--accent-complete);
+    font-size: 12px;
+    font-family: var(--mono);
+    padding: 6px 14px;
+    border-radius: var(--radius);
+    opacity: 0;
+    transform: translateY(6px);
+    transition: opacity 0.2s, transform 0.2s;
+    pointer-events: none;
+    z-index: 100;
+  }
+  .save-flash.visible {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  /* ── Board ── */
+  .board {
+    display: flex;
+    gap: 14px;
+    padding: 20px 32px 32px;
+    align-items: flex-start;
+    overflow-x: auto;
+  }
+
+  /* ── Column ── */
+  .column {
+    width: calc(50vw - 50px);
+    min-width: calc(50vw - 50px);
+    max-width: calc(50vw - 50px);
+    flex-shrink: 0;
+    display: flex;
+    flex-direction: column;
+  }
+  .column-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 0 4px 10px;
+  }
+  .column-indicator {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+  .col-live .column-indicator   { background: var(--accent-live); }
+  .col-vault .column-indicator  { background: var(--accent-vault); }
+  .col-flex .column-indicator   { background: var(--accent-flex); }
+  .col-dump .column-indicator   { background: var(--accent-dump); }
+  .col-archive .column-indicator { background: var(--accent-archive); }
+
+  .column-name {
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--text-secondary);
+  }
+  .column-count {
+    font-size: 11px;
+    font-family: var(--mono);
+    color: var(--text-muted);
+    margin-left: auto;
+  }
+
+  .column-body {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 6px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    min-height: 48px;
+    transition: border-color 0.15s, background 0.15s;
+  }
+  .column-body.drag-over {
+    border-color: var(--border-hover);
+    background: #1e1f24;
+  }
+
+  /* ── Card ── */
+  .card {
+    background: var(--surface-raised);
+    border: 1px solid transparent;
+    border-radius: var(--radius);
+    padding: 10px 12px;
+    cursor: grab;
+    transition: border-color 0.12s, opacity 0.15s, transform 0.15s;
+    position: relative;
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    min-width: 0;
+    overflow: hidden;
+  }
+  .card:hover { border-color: var(--border-hover); }
+  .card:active { cursor: grabbing; }
+  .card.dragging { opacity: 0.3; transform: scale(0.97); }
+  .card.drop-preview {
+    border: 1px dashed var(--border-hover);
+    background: transparent;
+    min-height: 40px;
+    padding: 0;
+  }
+  .card.drop-preview * { visibility: hidden; }
+
+  .card-checkbox {
+    width: 15px;
+    height: 15px;
+    border: 1.5px solid var(--border-hover);
+    border-radius: 3px;
+    flex-shrink: 0;
+    cursor: pointer;
+    margin-top: 1px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.15s;
+    background: transparent;
+  }
+  .card-checkbox:hover {
+    border-color: var(--accent-complete);
+    background: rgba(58, 154, 107, 0.1);
+  }
+  .card-checkbox svg {
+    width: 10px;
+    height: 10px;
+    opacity: 0;
+    color: var(--accent-complete);
+    transition: opacity 0.12s;
+  }
+  .card-checkbox:hover svg { opacity: 0.5; }
+
+  .card-content { flex: 1; min-width: 0; overflow: hidden; }
+  .card-title {
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text-primary);
+    line-height: 1.35;
+    word-break: break-word;
+    overflow-wrap: anywhere;
+    white-space: pre-wrap;
+  }
+  .card-desc {
+    font-size: 11.5px;
+    color: var(--text-secondary);
+    line-height: 1.4;
+    margin-top: 3px;
+    word-break: break-word;
+    overflow-wrap: anywhere;
+    white-space: pre-wrap;
+  }
+  .card-meta {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-top: 6px;
+  }
+  .card-tag {
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    font-family: var(--mono);
+    padding: 1px 6px;
+    border-radius: 3px;
+  }
+  .tag-hw    { background: rgba(224,92,54,0.15); color: var(--accent-live); }
+  .tag-sw    { background: rgba(59,130,196,0.15); color: var(--accent-vault); }
+  .tag-doc   { background: rgba(139,108,193,0.15); color: var(--accent-flex); }
+  .tag-admin { background: rgba(92,92,97,0.2); color: var(--text-secondary); }
+
+  .card-actions {
+    position: absolute;
+    top: 6px;
+    right: 6px;
+    display: flex;
+    gap: 2px;
+    opacity: 0;
+    transition: opacity 0.12s;
+  }
+  .card:hover .card-actions { opacity: 1; }
+  .card-action-btn {
+    background: none;
+    border: none;
+    color: var(--text-muted);
+    cursor: pointer;
+    padding: 2px 4px;
+    font-size: 13px;
+    line-height: 1;
+    border-radius: 3px;
+    transition: color 0.12s, background 0.12s;
+  }
+  .card-action-btn:hover { color: var(--text-primary); background: rgba(255,255,255,0.05); }
+  .card-action-btn.delete-btn:hover { color: var(--danger); }
+
+  /* Archive card styling */
+  .col-archive .card {
+    opacity: 0.6;
+    cursor: default;
+  }
+  .col-archive .card:hover { opacity: 0.8; }
+  .col-archive .card-checkbox { display: none; }
+  .col-archive .card-title { text-decoration: line-through; text-decoration-color: var(--text-muted); }
+  .col-archive .card-completed-date {
+    font-size: 10px;
+    font-family: var(--mono);
+    color: var(--text-muted);
+    margin-top: 4px;
+  }
+
+  /* ── Add card ── */
+  .add-card-trigger {
+    background: none;
+    border: none;
+    color: var(--text-muted);
+    font-family: var(--font);
+    font-size: 12px;
+    padding: 8px 4px;
+    cursor: pointer;
+    text-align: left;
+    transition: color 0.12s;
+    width: 100%;
+  }
+  .add-card-trigger:hover { color: var(--text-secondary); }
+
+  .add-form {
+    background: var(--surface-raised);
+    border: 1px solid var(--border-hover);
+    border-radius: var(--radius);
+    padding: 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+  .add-form input,
+  .add-form textarea {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    color: var(--text-primary);
+    font-family: var(--font);
+    font-size: 13px;
+    padding: 7px 10px;
+    outline: none;
+    transition: border-color 0.12s;
+    resize: vertical;
+  }
+  .add-form input:focus,
+  .add-form textarea:focus { border-color: var(--border-hover); }
+  .add-form textarea { min-height: 40px; font-size: 12px; }
+  .add-form select {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    color: var(--text-secondary);
+    font-family: var(--font);
+    font-size: 11px;
+    padding: 5px 8px;
+    outline: none;
+    cursor: pointer;
+  }
+  .form-row {
+    display: flex;
+    gap: 6px;
+  }
+  .btn-add {
+    background: var(--accent-live);
+    border: none;
+    border-radius: var(--radius);
+    color: #fff;
+    font-family: var(--font);
+    font-size: 12px;
+    font-weight: 600;
+    padding: 6px 14px;
+    cursor: pointer;
+    transition: opacity 0.12s;
+  }
+  .btn-add:hover { opacity: 0.85; }
+  .btn-form-cancel {
+    background: none;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    color: var(--text-muted);
+    font-family: var(--font);
+    font-size: 12px;
+    padding: 6px 12px;
+    cursor: pointer;
+    transition: color 0.12s;
+  }
+  .btn-form-cancel:hover { color: var(--text-secondary); }
+
+  /* ── Edit inline ── */
+  .card-edit-title {
+    background: var(--bg);
+    border: 1px solid var(--border-hover);
+    border-radius: 3px;
+    color: var(--text-primary);
+    font-family: var(--font);
+    font-size: 13px;
+    font-weight: 500;
+    padding: 3px 6px;
+    outline: none;
+    width: 100%;
+    resize: none;
+    line-height: 1.35;
+    min-height: 20px;
+  }
+  .card-edit-desc {
+    background: var(--bg);
+    border: 1px solid var(--border-hover);
+    border-radius: 3px;
+    color: var(--text-secondary);
+    font-family: var(--font);
+    font-size: 11.5px;
+    padding: 3px 6px;
+    outline: none;
+    width: 100%;
+    resize: none;
+    line-height: 1.4;
+    min-height: 20px;
+    margin-top: 3px;
+  }
+
+  /* ── Empty state ── */
+  .empty-state {
+    font-size: 11px;
+    color: var(--text-muted);
+    text-align: center;
+    padding: 14px 8px;
+    font-style: italic;
+  }
+
+  /* ── Responsive ── */
+
+  /* Mobile tab bar (hidden on desktop) */
+  .mobile-tabs {
+    display: none;
+    gap: 0;
+    padding: 12px 16px 0;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+  .mobile-tab {
+    background: none;
+    border: none;
+    border-bottom: 2px solid transparent;
+    color: var(--text-muted);
+    font-family: var(--font);
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    padding: 8px 14px;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: color 0.12s, border-color 0.12s;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .mobile-tab:hover { color: var(--text-secondary); }
+  .mobile-tab.active { color: var(--text-primary); border-bottom-color: var(--text-primary); }
+  .mobile-tab .tab-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+  .mobile-tab .tab-count {
+    font-size: 10px;
+    font-family: var(--mono);
+    color: var(--text-muted);
+  }
+
+  @media (max-width: 700px) {
+    .header {
+      padding: 16px 16px 0;
+    }
+    .header-actions {
+      gap: 6px;
+    }
+    .btn-header {
+      padding: 8px 10px;
+      font-size: 11px;
+    }
+    .btn-header .btn-label { display: none; }
+    .btn-header svg { width: 15px; height: 15px; }
+
+    /* Show tab bar */
+    .mobile-tabs { display: flex; }
+
+    /* Board becomes vertical, one column at a time */
+    .board {
+      display: block;
+      padding: 12px 16px 32px;
+      overflow-x: visible;
+    }
+    .column {
+      width: 100% !important;
+      min-width: 100% !important;
+      max-width: 100% !important;
+      display: none;
+    }
+    .column.mobile-active {
+      display: flex;
+    }
+
+    /* Hide desktop column headers on mobile (tab bar replaces them) */
+    .column-header { display: none; }
+
+    /* Make card actions always visible on mobile (no hover) */
+    .card-actions {
+      opacity: 1;
+      position: static;
+      flex-shrink: 0;
+      margin-left: auto;
+    }
+    .card {
+      gap: 10px;
+      padding: 12px 14px;
+    }
+    .card-action-btn {
+      padding: 6px 8px;
+      font-size: 16px;
+    }
+    .card-checkbox {
+      width: 20px;
+      height: 20px;
+      margin-top: 0;
+    }
+    .card-checkbox svg { width: 13px; height: 13px; }
+    .card-title { font-size: 14px; }
+    .card-desc { font-size: 12px; }
+
+    /* Touch-friendly add form */
+    .add-form input,
+    .add-form textarea {
+      font-size: 16px;
+      padding: 10px 12px;
+    }
+    .add-form select {
+      font-size: 13px;
+      padding: 8px 10px;
+    }
+    .btn-add, .btn-form-cancel {
+      padding: 10px 16px;
+      font-size: 14px;
+    }
+    .add-card-trigger {
+      font-size: 14px;
+      padding: 12px 4px;
+    }
+
+    /* Confirm dialog */
+    .confirm-box { padding: 20px; }
+    .confirm-box p { font-size: 14px; }
+    .confirm-actions button { padding: 10px 20px; font-size: 13px; }
+  }
+
+  /* ── Move menu (mobile card move) ── */
+  .move-menu {
+    position: absolute;
+    top: 100%;
+    right: 0;
+    margin-top: 4px;
+    background: var(--surface);
+    border: 1px solid var(--border-hover);
+    border-radius: var(--radius);
+    padding: 4px;
+    z-index: 50;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 120px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+  }
+  .move-menu-item {
+    background: none;
+    border: none;
+    color: var(--text-secondary);
+    font-family: var(--font);
+    font-size: 12px;
+    padding: 6px 10px;
+    cursor: pointer;
+    text-align: left;
+    border-radius: 3px;
+    transition: background 0.1s, color 0.1s;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .move-menu-item:hover { background: var(--surface-raised); color: var(--text-primary); }
+  .move-menu-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+
+  /* ── Confirm dialog ── */
+  .confirm-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.6);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 200;
+  }
+  .confirm-box {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 24px;
+    max-width: 360px;
+    width: 90%;
+  }
+  .confirm-box p {
+    font-size: 13px;
+    color: var(--text-primary);
+    margin-bottom: 16px;
+    line-height: 1.5;
+  }
+  .confirm-actions {
+    display: flex;
+    gap: 8px;
+    justify-content: flex-end;
+  }
+  .confirm-actions button {
+    font-family: var(--font);
+    font-size: 12px;
+    padding: 6px 16px;
+    border-radius: var(--radius);
+    cursor: pointer;
+    border: 1px solid var(--border);
+    background: var(--surface-raised);
+    color: var(--text-secondary);
+    transition: all 0.12s;
+  }
+  .confirm-actions button:hover {
+    color: var(--text-primary);
+    border-color: var(--border-hover);
+  }
+  .confirm-actions .confirm-danger {
+    background: var(--danger);
+    border-color: var(--danger);
+    color: #fff;
+  }
+  .confirm-actions .confirm-danger:hover { opacity: 0.85; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-left">
+    <div class="logo">LiveList</div>
+    <div class="tagline">Live &middot; Vault &middot; Flex &middot; Dump</div>
+  </div>
+  <div class="header-actions">
+    <div class="sync-bar" id="sync-bar" title="Sync status">
+      <div class="sync-dot off" id="sync-dot"></div>
+      <span id="sync-text">local only</span>
+    </div>
+    <button class="btn-header" onclick="showSetup()" title="Configure cloud sync">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 15a3 3 0 100-6 3 3 0 000 6z"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83 0 2 2 0 010-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 112.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 114 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06a1.65 1.65 0 00-.33 1.82V9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>
+      <span class="btn-label">Sync</span>
+    </button>
+    <button class="btn-header btn-archive-toggle" onclick="toggleArchive()" title="Toggle archive column">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 8v13H3V8M1 3h22v5H1zM10 12h4"/></svg>
+      <span class="btn-label">Archive</span>
+    </button>
+    <button class="btn-header btn-export" id="btn-export" onclick="exportData()" title="Export all data as JSON">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>
+      <span class="btn-label">Export</span>
+      <span class="export-badge" id="export-badge"></span>
+    </button>
+    <button class="btn-header" onclick="importData()" title="Import JSON data">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M17 8l-5-5-5 5M12 3v12"/></svg>
+      <span class="btn-label">Import</span>
+    </button>
+    <button class="btn-header" onclick="confirmClearAll()" title="Clear all data">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/></svg>
+      <span class="btn-label">Clear</span>
+    </button>
+  </div>
+</div>
+
+<div class="mobile-tabs" id="mobile-tabs">
+  <!-- Built by JS -->
+</div>
+
+<div class="save-flash" id="save-flash">saved</div>
+
+<div class="board" id="board">
+  <!-- Columns built by JS -->
+</div>
+
+<input type="file" id="import-input" accept=".json" style="display:none">
+
+<script>
+(function() {
+  var STORE_KEY = 'livelist-data';
+  var SYNC_CFG_KEY = 'livelist-sync-cfg';
+  var COLUMNS = [
+    { id: 'live',    name: 'Live',    accent: 'live',    empty: 'What are you working on right now?' },
+    { id: 'vault',   name: 'Vault',   accent: 'vault',   empty: 'Queued up and waiting.' },
+    { id: 'flex',    name: 'Flex',    accent: 'flex',    empty: 'Optional, if time allows.' },
+    { id: 'dump',    name: 'Dump',    accent: 'dump',    empty: 'Abandoned ideas rest here.' },
+    { id: 'archive', name: 'Archive', accent: 'archive', empty: 'Completed tasks land here.' },
+  ];
+  var TAGS = [
+    { value: 'hw',    label: 'HW',    cls: 'tag-hw' },
+    { value: 'sw',    label: 'SW',    cls: 'tag-sw' },
+    { value: 'doc',   label: 'Doc',   cls: 'tag-doc' },
+    { value: 'admin', label: 'Admin', cls: 'tag-admin' },
+  ];
+
+  var draggedCard = null;
+  var archiveVisible = false;
+  var unsavedChanges = 0;
+  var mobileActiveCol = 'live';
+  var syncCfg = loadSyncCfg();   // { apiKey, binId } or null
+  var syncTimer = null;
+  var pollTimer = null;
+  var lastSyncHash = '';
+  var data = loadData();
+
+  function defaultData() {
+    return { live: [], vault: [], flex: [], dump: [], archive: [] };
+  }
+
+  // ── Sync config persistence ──
+  function loadSyncCfg() {
+    try {
+      var raw = localStorage.getItem(SYNC_CFG_KEY);
+      if (raw) { var c = JSON.parse(raw); if (c.apiKey && c.binId) return c; }
+    } catch(e) {}
+    return null;
+  }
+  function saveSyncCfg(cfg) {
+    syncCfg = cfg;
+    localStorage.setItem(SYNC_CFG_KEY, JSON.stringify(cfg));
+  }
+
+  // ── Sync status UI ──
+  function setSyncStatus(state, text) {
+    var dot = document.getElementById('sync-dot');
+    var txt = document.getElementById('sync-text');
+    dot.className = 'sync-dot ' + state;
+    txt.textContent = text;
+  }
+
+  // ── Local storage ──
+  function loadData() {
+    try {
+      var raw = localStorage.getItem(STORE_KEY);
+      if (!raw) return defaultData();
+      var d = JSON.parse(raw);
+      COLUMNS.forEach(function(c) { if (!d[c.id]) d[c.id] = []; });
+      return d;
+    } catch(e) { return defaultData(); }
+  }
+
+  function saveLocal() {
+    localStorage.setItem(STORE_KEY, JSON.stringify(data));
+  }
+
+  // ── JSONBin API ──
+  function jsonbinRead(cb) {
+    if (!syncCfg) return cb(null, null);
+    setSyncStatus('busy', 'pulling');
+    fetch('https://api.jsonbin.io/v3/b/' + syncCfg.binId + '/latest', {
+      headers: { 'X-Master-Key': syncCfg.apiKey }
+    }).then(function(r) {
+      if (!r.ok) throw new Error('HTTP ' + r.status);
+      return r.json();
+    }).then(function(json) {
+      var record = json.record || json;
+      setSyncStatus('ok', 'synced');
+      cb(null, record);
+    }).catch(function(err) {
+      setSyncStatus('err', 'pull error');
+      cb(err, null);
+    });
+  }
+
+  function jsonbinWrite(payload, cb) {
+    if (!syncCfg) { if (cb) cb(null); return; }
+    setSyncStatus('busy', 'pushing');
+    fetch('https://api.jsonbin.io/v3/b/' + syncCfg.binId, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Master-Key': syncCfg.apiKey
+      },
+      body: JSON.stringify(payload)
+    }).then(function(r) {
+      if (!r.ok) throw new Error('HTTP ' + r.status);
+      return r.json();
+    }).then(function() {
+      lastSyncHash = hashData(payload);
+      setSyncStatus('ok', 'synced');
+      if (cb) cb(null);
+    }).catch(function(err) {
+      setSyncStatus('err', 'push error');
+      if (cb) cb(err);
+    });
+  }
+
+  // Simple hash to detect remote changes
+  function hashData(d) {
+    return JSON.stringify(d).length + ':' + JSON.stringify(d).slice(0, 200);
+  }
+
+  // ── Save (local + debounced remote push) ──
+  function saveData() {
+    saveLocal();
+    unsavedChanges++;
+    updateExportIndicator();
+    flashSave();
+
+    // Debounce remote push: wait 1.5s after last change
+    if (syncCfg) {
+      clearTimeout(syncTimer);
+      syncTimer = setTimeout(function() {
+        jsonbinWrite(data, function(err) {
+          if (!err) {
+            // Push succeeded
+          }
+        });
+      }, 1500);
+    }
+  }
+
+  // ── Poll for remote changes ──
+  function startPolling() {
+    stopPolling();
+    if (!syncCfg) return;
+    pollTimer = setInterval(function() {
+      jsonbinRead(function(err, remote) {
+        if (err || !remote) return;
+        var remoteHash = hashData(remote);
+        if (remoteHash !== lastSyncHash && remoteHash !== hashData(data)) {
+          // Remote has newer data — merge by replacing
+          COLUMNS.forEach(function(c) { if (!remote[c.id]) remote[c.id] = []; });
+          data = remote;
+          saveLocal();
+          lastSyncHash = remoteHash;
+          render();
+          setSyncStatus('ok', 'synced');
+        }
+      });
+    }, 15000); // Poll every 15 seconds
+  }
+  function stopPolling() {
+    if (pollTimer) { clearInterval(pollTimer); pollTimer = null; }
+  }
+
+  // ── Initial sync on load ──
+  function initialSync() {
+    if (!syncCfg) {
+      setSyncStatus('off', 'local only');
+      return;
+    }
+    setSyncStatus('busy', 'connecting');
+    jsonbinRead(function(err, remote) {
+      if (err) {
+        setSyncStatus('err', 'offline');
+        return;
+      }
+      if (remote && remote.live !== undefined) {
+        // Remote has data — use it
+        COLUMNS.forEach(function(c) { if (!remote[c.id]) remote[c.id] = []; });
+        data = remote;
+        saveLocal();
+        lastSyncHash = hashData(data);
+        render();
+      } else {
+        // Bin is empty — push local data up
+        lastSyncHash = hashData(data);
+        jsonbinWrite(data, null);
+      }
+      startPolling();
+    });
+  }
+
+  // ── Setup UI ──
+  window.showSetup = function() {
+    // Remove existing setup overlay
+    var existing = document.querySelector('.setup-overlay');
+    if (existing) { existing.remove(); return; }
+
+    var ov = document.createElement('div');
+    ov.className = 'setup-overlay';
+    var box = document.createElement('div');
+    box.className = 'setup-box';
+    box.innerHTML = '<h2>Cloud Sync</h2>' +
+      '<p>Sync your board across devices using <a href="https://jsonbin.io" target="_blank">jsonbin.io</a> (free).<br>' +
+      '1. Sign up at jsonbin.io<br>' +
+      '2. Copy your <strong>API Key</strong> from the dashboard<br>' +
+      '3. Create a new bin (paste <code>{}</code> as content), copy the <strong>Bin ID</strong></p>' +
+      '<label>API Key (X-Master-Key)</label>' +
+      '<input type="text" id="setup-apikey" placeholder="$2a$10$..." value="' + (syncCfg ? syncCfg.apiKey : '') + '">' +
+      '<div class="setup-hint">Found in your jsonbin.io dashboard under API Keys</div>' +
+      '<label>Bin ID</label>' +
+      '<input type="text" id="setup-binid" placeholder="64a..." value="' + (syncCfg ? syncCfg.binId : '') + '">' +
+      '<div class="setup-hint">The ID of the bin you created for LiveList</div>' +
+      '<div class="setup-error" id="setup-error"></div>' +
+      '<div class="setup-actions">' +
+        '<button class="setup-save" id="setup-save-btn">Connect</button>' +
+        '<button class="setup-skip" id="setup-skip-btn">Cancel</button>' +
+        (syncCfg ? '<button class="setup-skip" id="setup-disconnect-btn" style="color:var(--danger);border-color:var(--danger)!important;margin-left:auto">Disconnect</button>' : '') +
+      '</div>';
+
+    ov.appendChild(box);
+    document.body.appendChild(ov);
+
+    document.getElementById('setup-save-btn').addEventListener('click', function() {
+      var apiKey = document.getElementById('setup-apikey').value.trim();
+      var binId = document.getElementById('setup-binid').value.trim();
+      var errEl = document.getElementById('setup-error');
+
+      if (!apiKey || !binId) {
+        errEl.textContent = 'Both fields are required.';
+        return;
+      }
+
+      errEl.textContent = 'Testing connection...';
+      // Verify by reading the bin
+      fetch('https://api.jsonbin.io/v3/b/' + binId + '/latest', {
+        headers: { 'X-Master-Key': apiKey }
+      }).then(function(r) {
+        if (!r.ok) throw new Error('HTTP ' + r.status + ' — check your API key and bin ID');
+        return r.json();
+      }).then(function(json) {
+        saveSyncCfg({ apiKey: apiKey, binId: binId });
+        ov.remove();
+
+        // If bin is empty, push current local data
+        var record = json.record || json;
+        if (!record || record.live === undefined) {
+          jsonbinWrite(data, function() {
+            lastSyncHash = hashData(data);
+            startPolling();
+          });
+        } else {
+          COLUMNS.forEach(function(c) { if (!record[c.id]) record[c.id] = []; });
+          data = record;
+          saveLocal();
+          lastSyncHash = hashData(data);
+          render();
+          startPolling();
+        }
+        setSyncStatus('ok', 'synced');
+      }).catch(function(err) {
+        errEl.textContent = 'Connection failed: ' + err.message;
+      });
+    });
+
+    document.getElementById('setup-skip-btn').addEventListener('click', function() { ov.remove(); });
+
+    var dcBtn = document.getElementById('setup-disconnect-btn');
+    if (dcBtn) {
+      dcBtn.addEventListener('click', function() {
+        localStorage.removeItem(SYNC_CFG_KEY);
+        syncCfg = null;
+        stopPolling();
+        setSyncStatus('off', 'local only');
+        ov.remove();
+      });
+    }
+
+    ov.addEventListener('click', function(e) { if (e.target === ov) ov.remove(); });
+    document.getElementById('setup-apikey').focus();
+  };
+
+  function updateExportIndicator() {
+    var btn = document.getElementById('btn-export');
+    var badge = document.getElementById('export-badge');
+    if (unsavedChanges > 0) {
+      btn.classList.add('has-changes');
+      badge.textContent = unsavedChanges;
+      btn.title = unsavedChanges + ' change' + (unsavedChanges === 1 ? '' : 's') + ' since last export';
+    } else {
+      btn.classList.remove('has-changes');
+      badge.textContent = '';
+      btn.title = 'Export all data as JSON';
+    }
+  }
+
+  function flashSave() {
+    var el = document.getElementById('save-flash');
+    el.classList.add('visible');
+    clearTimeout(el._t);
+    el._t = setTimeout(function() { el.classList.remove('visible'); }, 1200);
+  }
+
+  // ── Render ──
+  function render() {
+    var board = document.getElementById('board');
+    board.innerHTML = '';
+
+    // Render mobile tabs
+    renderMobileTabs();
+
+    COLUMNS.forEach(function(colDef) {
+      if (colDef.id === 'archive' && !archiveVisible) return;
+      var col = document.createElement('div');
+      col.className = 'column col-' + colDef.accent;
+      if (colDef.id === mobileActiveCol) col.classList.add('mobile-active');
+
+      var header = document.createElement('div');
+      header.className = 'column-header';
+      header.innerHTML = '<div class="column-indicator"></div>' +
+        '<span class="column-name">' + colDef.name + '</span>' +
+        '<span class="column-count">' + data[colDef.id].length + '</span>';
+      col.appendChild(header);
+
+      var body = document.createElement('div');
+      body.className = 'column-body';
+      body.dataset.column = colDef.id;
+
+      var cards = data[colDef.id];
+      if (cards.length === 0 && colDef.id !== 'archive') {
+        var empty = document.createElement('div');
+        empty.className = 'empty-state';
+        empty.textContent = colDef.empty;
+        body.appendChild(empty);
+      }
+
+      cards.forEach(function(cardData, idx) {
+        body.appendChild(buildCard(cardData, colDef.id, idx));
+      });
+
+      if (colDef.id !== 'archive') {
+        var addBtn = document.createElement('button');
+        addBtn.className = 'add-card-trigger';
+        addBtn.textContent = '+ Add task';
+        addBtn.addEventListener('click', function() { showAddForm(body, colDef.id, addBtn); });
+        body.appendChild(addBtn);
+      }
+
+      if (cards.length === 0 && colDef.id === 'archive') {
+        var empty2 = document.createElement('div');
+        empty2.className = 'empty-state';
+        empty2.textContent = colDef.empty;
+        body.appendChild(empty2);
+      }
+
+      col.appendChild(body);
+      board.appendChild(col);
+      setupDropZone(body, colDef.id);
+    });
+  }
+
+  function renderMobileTabs() {
+    var tabBar = document.getElementById('mobile-tabs');
+    if (!tabBar) return;
+    tabBar.innerHTML = '';
+
+    var accentMap = { live: '--accent-live', vault: '--accent-vault', flex: '--accent-flex', dump: '--accent-dump', archive: '--accent-archive' };
+
+    COLUMNS.forEach(function(colDef) {
+      if (colDef.id === 'archive' && !archiveVisible) return;
+
+      var tab = document.createElement('button');
+      tab.className = 'mobile-tab' + (colDef.id === mobileActiveCol ? ' active' : '');
+
+      var dot = document.createElement('span');
+      dot.className = 'tab-dot';
+      dot.style.background = 'var(' + accentMap[colDef.id] + ')';
+      tab.appendChild(dot);
+
+      var label = document.createTextNode(colDef.name);
+      tab.appendChild(label);
+
+      var count = document.createElement('span');
+      count.className = 'tab-count';
+      count.textContent = data[colDef.id].length;
+      tab.appendChild(count);
+
+      tab.addEventListener('click', function() {
+        mobileActiveCol = colDef.id;
+        render();
+      });
+      tabBar.appendChild(tab);
+    });
+  }
+
+  function buildCard(cardData, colId, idx) {
+    var card = document.createElement('div');
+    card.className = 'card';
+    card.draggable = (colId !== 'archive');
+    card.dataset.col = colId;
+    card.dataset.idx = idx;
+
+    // Checkbox
+    if (colId !== 'archive') {
+      var cb = document.createElement('div');
+      cb.className = 'card-checkbox';
+      cb.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M5 13l4 4L19 7"/></svg>';
+      cb.addEventListener('click', function(e) {
+        e.stopPropagation();
+        completeTask(colId, idx);
+      });
+      card.appendChild(cb);
+    }
+
+    var content = document.createElement('div');
+    content.className = 'card-content';
+
+    var title = document.createElement('div');
+    title.className = 'card-title';
+    title.textContent = cardData.title;
+    content.appendChild(title);
+
+    if (cardData.desc) {
+      var desc = document.createElement('div');
+      desc.className = 'card-desc';
+      desc.textContent = cardData.desc;
+      content.appendChild(desc);
+    }
+
+    var meta = document.createElement('div');
+    meta.className = 'card-meta';
+    if (cardData.tag) {
+      var tagInfo = TAGS.find(function(t) { return t.value === cardData.tag; });
+      if (tagInfo) {
+        var tagEl = document.createElement('span');
+        tagEl.className = 'card-tag ' + tagInfo.cls;
+        tagEl.textContent = tagInfo.label;
+        meta.appendChild(tagEl);
+      }
+    }
+    if (colId === 'archive' && cardData.completedAt) {
+      var dateEl = document.createElement('div');
+      dateEl.className = 'card-completed-date';
+      dateEl.textContent = formatDate(cardData.completedAt);
+      content.appendChild(dateEl);
+    }
+    if (meta.children.length) content.appendChild(meta);
+    card.appendChild(content);
+
+    // Actions
+    if (colId !== 'archive') {
+      var actions = document.createElement('div');
+      actions.className = 'card-actions';
+
+      // Move button
+      var moveBtn = document.createElement('button');
+      moveBtn.className = 'card-action-btn move-btn';
+      moveBtn.innerHTML = '&#8596;';
+      moveBtn.title = 'Move to...';
+      moveBtn.addEventListener('click', function(e) {
+        e.stopPropagation();
+        showMoveMenu(card, colId, idx);
+      });
+      actions.appendChild(moveBtn);
+
+      var editBtn = document.createElement('button');
+      editBtn.className = 'card-action-btn';
+      editBtn.innerHTML = '&#9998;';
+      editBtn.title = 'Edit';
+      editBtn.addEventListener('click', function(e) {
+        e.stopPropagation();
+        editCard(colId, idx);
+      });
+      actions.appendChild(editBtn);
+
+      var delBtn = document.createElement('button');
+      delBtn.className = 'card-action-btn delete-btn';
+      delBtn.innerHTML = '&times;';
+      delBtn.title = 'Delete';
+      delBtn.addEventListener('click', function(e) {
+        e.stopPropagation();
+        deleteCard(colId, idx);
+      });
+      actions.appendChild(delBtn);
+
+      card.appendChild(actions);
+    } else {
+      // Archive: restore button
+      var actions2 = document.createElement('div');
+      actions2.className = 'card-actions';
+      var restoreBtn = document.createElement('button');
+      restoreBtn.className = 'card-action-btn';
+      restoreBtn.innerHTML = '&#8634;';
+      restoreBtn.title = 'Restore to Live';
+      restoreBtn.addEventListener('click', function(e) {
+        e.stopPropagation();
+        restoreCard(idx);
+      });
+      actions2.appendChild(restoreBtn);
+      var delBtn2 = document.createElement('button');
+      delBtn2.className = 'card-action-btn delete-btn';
+      delBtn2.innerHTML = '&times;';
+      delBtn2.title = 'Delete permanently';
+      delBtn2.addEventListener('click', function(e) {
+        e.stopPropagation();
+        deleteCard('archive', idx);
+      });
+      actions2.appendChild(delBtn2);
+      card.appendChild(actions2);
+    }
+
+    // Drag handlers
+    if (colId !== 'archive') {
+      card.addEventListener('dragstart', function(e) {
+        draggedCard = { col: colId, idx: idx };
+        card.classList.add('dragging');
+        e.dataTransfer.effectAllowed = 'move';
+        e.dataTransfer.setData('text/plain', '');
+      });
+      card.addEventListener('dragend', function() {
+        card.classList.remove('dragging');
+        draggedCard = null;
+        document.querySelectorAll('.column-body').forEach(function(b) { b.classList.remove('drag-over'); });
+        document.querySelectorAll('.drop-preview').forEach(function(p) { p.remove(); });
+      });
+    }
+
+    return card;
+  }
+
+  // ── Drag & Drop zones ──
+  function setupDropZone(body, colId) {
+    if (colId === 'archive') return;
+
+    body.addEventListener('dragover', function(e) {
+      e.preventDefault();
+      if (!draggedCard) return;
+      e.dataTransfer.dropEffect = 'move';
+      body.classList.add('drag-over');
+
+      document.querySelectorAll('.drop-preview').forEach(function(p) { p.remove(); });
+      var afterIdx = getDropIndex(body, e.clientY);
+      var ph = document.createElement('div');
+      ph.className = 'card drop-preview';
+      ph.style.height = '36px';
+
+      var realCards = body.querySelectorAll('.card:not(.dragging):not(.drop-preview)');
+      if (afterIdx >= realCards.length) {
+        var trigger = body.querySelector('.add-card-trigger');
+        if (trigger) body.insertBefore(ph, trigger);
+        else body.appendChild(ph);
+      } else {
+        body.insertBefore(ph, realCards[afterIdx]);
+      }
+    });
+
+    body.addEventListener('dragleave', function(e) {
+      if (!body.contains(e.relatedTarget)) {
+        body.classList.remove('drag-over');
+        body.querySelectorAll('.drop-preview').forEach(function(p) { p.remove(); });
+      }
+    });
+
+    body.addEventListener('drop', function(e) {
+      e.preventDefault();
+      body.classList.remove('drag-over');
+      body.querySelectorAll('.drop-preview').forEach(function(p) { p.remove(); });
+      if (!draggedCard) return;
+
+      var fromCol = draggedCard.col;
+      var fromIdx = draggedCard.idx;
+      var toCol = colId;
+      var dropIdx = getDropIndex(body, e.clientY);
+
+      var item = data[fromCol].splice(fromIdx, 1)[0];
+      if (fromCol === toCol && fromIdx < dropIdx) dropIdx--;
+      data[toCol].splice(dropIdx, 0, item);
+      draggedCard = null;
+      saveData();
+      render();
+    });
+  }
+
+  function getDropIndex(container, y) {
+    var cards = container.querySelectorAll('.card:not(.dragging):not(.drop-preview)');
+    for (var i = 0; i < cards.length; i++) {
+      var box = cards[i].getBoundingClientRect();
+      if (y < box.top + box.height / 2) return i;
+    }
+    return cards.length;
+  }
+
+  // ── Complete task ──
+  function completeTask(colId, idx) {
+    var item = data[colId].splice(idx, 1)[0];
+    item.completedAt = new Date().toISOString();
+    data.archive.unshift(item);
+    saveData();
+    render();
+  }
+
+  function restoreCard(idx) {
+    var item = data.archive.splice(idx, 1)[0];
+    delete item.completedAt;
+    data.live.unshift(item);
+    saveData();
+    render();
+  }
+
+  // ── Delete ──
+  function deleteCard(colId, idx) {
+    data[colId].splice(idx, 1);
+    saveData();
+    render();
+  }
+
+  // ── Move menu ──
+  function showMoveMenu(cardEl, fromCol, idx) {
+    document.querySelectorAll('.move-menu').forEach(function(m) { m.remove(); });
+
+    var accentMap = { live: '--accent-live', vault: '--accent-vault', flex: '--accent-flex', dump: '--accent-dump' };
+    var menu = document.createElement('div');
+    menu.className = 'move-menu';
+
+    var targets = COLUMNS.filter(function(c) { return c.id !== fromCol && c.id !== 'archive'; });
+    targets.forEach(function(colDef) {
+      var btn = document.createElement('button');
+      btn.className = 'move-menu-item';
+
+      var dot = document.createElement('span');
+      dot.className = 'move-menu-dot';
+      dot.style.background = 'var(' + accentMap[colDef.id] + ')';
+      btn.appendChild(dot);
+
+      btn.appendChild(document.createTextNode(colDef.name));
+
+      btn.addEventListener('click', function(e) {
+        e.stopPropagation();
+        var item = data[fromCol].splice(idx, 1)[0];
+        data[colDef.id].push(item);
+        mobileActiveCol = colDef.id;
+        saveData();
+        render();
+      });
+      menu.appendChild(btn);
+    });
+
+    cardEl.style.position = 'relative';
+    cardEl.appendChild(menu);
+
+    function closeMenu(e) {
+      if (!menu.contains(e.target)) {
+        menu.remove();
+        document.removeEventListener('click', closeMenu, true);
+      }
+    }
+    setTimeout(function() {
+      document.addEventListener('click', closeMenu, true);
+    }, 10);
+  }
+
+  // ── Edit ──
+  function editCard(colId, idx) {
+    var cardData = data[colId][idx];
+    var cardEls = document.querySelectorAll('.column-body[data-column="' + colId + '"] .card:not(.drop-preview)');
+    var cardEl = cardEls[idx];
+    if (!cardEl) return;
+
+    var titleEl = cardEl.querySelector('.card-title');
+    var descEl = cardEl.querySelector('.card-desc');
+    var contentEl = cardEl.querySelector('.card-content');
+    var origTitle = cardData.title;
+    var origDesc = cardData.desc || '';
+
+    var titleInput = document.createElement('textarea');
+    titleInput.className = 'card-edit-title';
+    titleInput.value = origTitle;
+    titleInput.rows = 1;
+    titleEl.replaceWith(titleInput);
+
+    var descInput = document.createElement('textarea');
+    descInput.className = 'card-edit-desc';
+    descInput.value = origDesc;
+    descInput.placeholder = 'Details (optional)';
+    descInput.rows = 1;
+    if (descEl) {
+      descEl.replaceWith(descInput);
+    } else {
+      titleInput.insertAdjacentElement('afterend', descInput);
+    }
+
+    titleInput.focus();
+    titleInput.select();
+
+    function autoResize(el) {
+      el.style.height = 'auto';
+      el.style.height = el.scrollHeight + 'px';
+    }
+    autoResize(titleInput);
+    autoResize(descInput);
+    titleInput.addEventListener('input', function() { autoResize(titleInput); });
+    descInput.addEventListener('input', function() { autoResize(descInput); });
+
+    var saved = false;
+    function save() {
+      if (saved) return;
+      saved = true;
+      var tVal = titleInput.value.trim();
+      if (tVal) cardData.title = tVal;
+      cardData.desc = descInput.value.trim();
+      saveData();
+      render();
+    }
+    function cancel() {
+      if (saved) return;
+      saved = true;
+      cardData.title = origTitle;
+      cardData.desc = origDesc;
+      render();
+    }
+
+    titleInput.addEventListener('blur', function() {
+      setTimeout(function() {
+        if (!cardEl.contains(document.activeElement) || (document.activeElement !== descInput && document.activeElement !== titleInput)) {
+          save();
+        }
+      }, 10);
+    });
+    descInput.addEventListener('blur', function() {
+      setTimeout(function() {
+        if (!cardEl.contains(document.activeElement) || (document.activeElement !== descInput && document.activeElement !== titleInput)) {
+          save();
+        }
+      }, 10);
+    });
+
+    function handleKey(e) {
+      if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); save(); }
+      if (e.key === 'Escape') { cancel(); }
+    }
+    titleInput.addEventListener('keydown', function(e) {
+      if (e.key === 'Tab' && !e.shiftKey) { e.preventDefault(); descInput.focus(); return; }
+      handleKey(e);
+    });
+    descInput.addEventListener('keydown', function(e) {
+      if (e.key === 'Tab' && e.shiftKey) { e.preventDefault(); titleInput.focus(); return; }
+      handleKey(e);
+    });
+  }
+
+  // ── Add form ──
+  function showAddForm(body, colId, triggerBtn) {
+    if (body.querySelector('.add-form')) return;
+    triggerBtn.style.display = 'none';
+
+    var emptyEl = body.querySelector('.empty-state');
+    if (emptyEl) emptyEl.remove();
+
+    var form = document.createElement('div');
+    form.className = 'add-form';
+
+    var inp = document.createElement('input');
+    inp.type = 'text';
+    inp.placeholder = 'Task name';
+
+    var ta = document.createElement('textarea');
+    ta.placeholder = 'Details (optional)';
+
+    var row = document.createElement('div');
+    row.className = 'form-row';
+
+    var sel = document.createElement('select');
+    var emptyOpt = document.createElement('option');
+    emptyOpt.value = '';
+    emptyOpt.textContent = 'Tag';
+    sel.appendChild(emptyOpt);
+    TAGS.forEach(function(t) {
+      var opt = document.createElement('option');
+      opt.value = t.value;
+      opt.textContent = t.label;
+      sel.appendChild(opt);
+    });
+
+    var addB = document.createElement('button');
+    addB.className = 'btn-add';
+    addB.textContent = 'Add';
+
+    var cancelB = document.createElement('button');
+    cancelB.className = 'btn-form-cancel';
+    cancelB.textContent = 'Cancel';
+
+    row.appendChild(sel);
+    row.appendChild(addB);
+    row.appendChild(cancelB);
+
+    form.appendChild(inp);
+    form.appendChild(ta);
+    form.appendChild(row);
+
+    body.insertBefore(form, triggerBtn);
+    inp.focus();
+
+    function close() {
+      form.remove();
+      triggerBtn.style.display = '';
+      render();
+    }
+
+    function submit() {
+      var title = inp.value.trim();
+      if (!title) { inp.focus(); return; }
+      data[colId].push({
+        id: 't-' + Date.now() + '-' + Math.random().toString(36).substr(2, 5),
+        title: title,
+        desc: ta.value.trim(),
+        tag: sel.value,
+        createdAt: new Date().toISOString(),
+      });
+      saveData();
+      render();
+    }
+
+    addB.addEventListener('click', submit);
+    cancelB.addEventListener('click', close);
+    inp.addEventListener('keydown', function(e) {
+      if (e.key === 'Enter') submit();
+      if (e.key === 'Escape') close();
+    });
+    ta.addEventListener('keydown', function(e) {
+      if (e.key === 'Escape') close();
+    });
+  }
+
+  // ── Archive toggle ──
+  window.toggleArchive = function() {
+    archiveVisible = !archiveVisible;
+    document.querySelector('.btn-archive-toggle').classList.toggle('active', archiveVisible);
+    render();
+  };
+
+  // ── Export ──
+  window.exportData = function() {
+    var json = JSON.stringify(data, null, 2);
+    var blob = new Blob([json], { type: 'application/json' });
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement('a');
+    a.href = url;
+    a.download = 'livelist-' + new Date().toISOString().slice(0, 10) + '.json';
+    a.click();
+    URL.revokeObjectURL(url);
+    unsavedChanges = 0;
+    updateExportIndicator();
+  };
+
+  // ── Import ──
+  window.importData = function() {
+    document.getElementById('import-input').click();
+  };
+  document.getElementById('import-input').addEventListener('change', function(e) {
+    var file = e.target.files[0];
+    if (!file) return;
+    var reader = new FileReader();
+    reader.onload = function(ev) {
+      try {
+        var imported = JSON.parse(ev.target.result);
+        COLUMNS.forEach(function(c) {
+          if (!imported[c.id]) imported[c.id] = [];
+        });
+        data = imported;
+        unsavedChanges = 0;
+        saveData();
+        unsavedChanges = 0;
+        updateExportIndicator();
+        render();
+      } catch(err) {
+        alert('Invalid JSON file.');
+      }
+    };
+    reader.readAsText(file);
+    e.target.value = '';
+  });
+
+  // ── Clear all ──
+  window.confirmClearAll = function() {
+    showConfirm('This will permanently delete all tasks across every column. Continue?', function() {
+      data = defaultData();
+      saveData();
+      render();
+    });
+  };
+
+  function showConfirm(msg, onConfirm) {
+    var overlay = document.createElement('div');
+    overlay.className = 'confirm-overlay';
+    var box = document.createElement('div');
+    box.className = 'confirm-box';
+    box.innerHTML = '<p>' + msg + '</p><div class="confirm-actions">' +
+      '<button class="confirm-cancel">Cancel</button>' +
+      '<button class="confirm-danger">Delete All</button></div>';
+    overlay.appendChild(box);
+    document.body.appendChild(overlay);
+
+    box.querySelector('.confirm-cancel').addEventListener('click', function() { overlay.remove(); });
+    box.querySelector('.confirm-danger').addEventListener('click', function() { overlay.remove(); onConfirm(); });
+    overlay.addEventListener('click', function(e) { if (e.target === overlay) overlay.remove(); });
+  }
+
+  function formatDate(iso) {
+    var d = new Date(iso);
+    var months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+    return months[d.getMonth()] + ' ' + d.getDate() + ', ' + d.getFullYear();
+  }
+
+  // ── Visibility change: sync when tab becomes active ──
+  document.addEventListener('visibilitychange', function() {
+    if (!document.hidden && syncCfg) {
+      jsonbinRead(function(err, remote) {
+        if (err || !remote || remote.live === undefined) return;
+        var remoteHash = hashData(remote);
+        if (remoteHash !== hashData(data)) {
+          COLUMNS.forEach(function(c) { if (!remote[c.id]) remote[c.id] = []; });
+          data = remote;
+          saveLocal();
+          lastSyncHash = remoteHash;
+          render();
+        }
+      });
+    }
+  });
+
+  // ── Init ──
+  render();
+  initialSync();
+})();
+</script>
+
+</body>
+</html>

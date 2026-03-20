@@ -93,124 +93,104 @@
   }
 
   /* ── Sync status ── */
-  .sync-bar {
-    display: flex;
-    align-items: center;
-    gap: 5px;
-    font-size: 11px;
+  .sync-status {
+    font-size: 10px;
     font-family: var(--mono);
-    color: var(--text-muted);
-    padding: 4px 10px;
-    border-radius: var(--radius);
-    background: var(--surface);
-    border: 1px solid var(--border);
-    cursor: default;
+    padding: 3px 8px;
+    border-radius: 3px;
+    transition: all 0.2s;
   }
-  .sync-dot {
-    width: 6px; height: 6px; border-radius: 50%;
-    background: var(--text-muted);
-    transition: background 0.3s;
-    flex-shrink: 0;
-  }
-  .sync-dot.ok   { background: var(--accent-complete); }
-  .sync-dot.busy { background: var(--accent-vault); animation: pulse 0.8s ease infinite; }
-  .sync-dot.err  { background: var(--danger); }
-  .sync-dot.off  { background: var(--text-muted); }
-  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.3} }
+  .sync-status.synced { color: var(--accent-archive); }
+  .sync-status.syncing { color: var(--accent-vault); }
+  .sync-status.error { color: var(--danger); }
+  .sync-status.offline { color: var(--text-muted); }
 
-  /* ── Setup overlay ── */
-  .setup-overlay {
-    position: fixed; inset: 0;
-    background: var(--bg);
-    display: flex; align-items: center; justify-content: center;
-    z-index: 500;
+  /* ── Settings panel ── */
+  .settings-panel {
+    padding: 12px 32px;
+    display: none;
   }
-  .setup-box {
+  .settings-panel.open { display: block; }
+  .settings-box {
     background: var(--surface);
     border: 1px solid var(--border);
-    border-radius: 8px;
-    padding: 32px;
-    max-width: 440px;
-    width: 90%;
+    border-radius: var(--radius);
+    padding: 16px;
+    max-width: 480px;
   }
-  .setup-box h2 {
-    font-family: var(--mono);
-    font-size: 14px;
-    font-weight: 700;
-    color: var(--accent-live);
-    letter-spacing: 0.06em;
-    text-transform: uppercase;
-    margin-bottom: 6px;
+  .settings-title {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 4px;
   }
-  .setup-box p {
-    font-size: 12px;
-    color: var(--text-secondary);
-    line-height: 1.6;
-    margin-bottom: 16px;
+  .settings-desc {
+    font-size: 11px;
+    color: var(--text-muted);
+    margin-bottom: 14px;
+    line-height: 1.5;
   }
-  .setup-box p a {
+  .settings-desc a {
     color: var(--accent-vault);
     text-decoration: none;
   }
-  .setup-box p a:hover { text-decoration: underline; }
-  .setup-box label {
+  .settings-field {
+    margin-bottom: 10px;
+  }
+  .settings-label {
     font-size: 11px;
     font-weight: 600;
     color: var(--text-secondary);
     text-transform: uppercase;
     letter-spacing: 0.04em;
-    display: block;
     margin-bottom: 4px;
-    margin-top: 12px;
+    display: block;
   }
-  .setup-box input[type="text"] {
+  .settings-input {
     width: 100%;
     background: var(--bg);
     border: 1px solid var(--border);
     border-radius: var(--radius);
     color: var(--text-primary);
     font-family: var(--mono);
-    font-size: 12px;
+    font-size: 13px;
     padding: 8px 10px;
     outline: none;
+    transition: border-color 0.12s;
   }
-  .setup-box input[type="text"]:focus { border-color: var(--border-hover); }
-  .setup-box .setup-hint {
-    font-size: 10px;
-    color: var(--text-muted);
-    margin-top: 3px;
+  .settings-input:focus { border-color: var(--border-hover); }
+  .settings-input::placeholder { color: var(--text-muted); }
+  .settings-actions {
+    display: flex;
+    gap: 8px;
+    margin-top: 14px;
+    flex-wrap: wrap;
   }
-  .setup-actions {
-    display: flex; gap: 8px;
-    margin-top: 20px;
-  }
-  .setup-actions button {
+  .btn-settings {
+    background: var(--accent-archive);
+    border: none;
+    border-radius: var(--radius);
+    color: #fff;
     font-family: var(--font);
     font-size: 12px;
     font-weight: 600;
-    padding: 8px 18px;
-    border-radius: var(--radius);
+    padding: 8px 16px;
     cursor: pointer;
-    border: none;
     transition: opacity 0.12s;
   }
-  .setup-save {
-    background: var(--accent-live);
-    color: #fff;
-  }
-  .setup-save:hover { opacity: 0.85; }
-  .setup-skip {
+  .btn-settings:hover { opacity: 0.85; }
+  .btn-settings.secondary {
     background: var(--surface-raised);
-    border: 1px solid var(--border) !important;
-    color: var(--text-muted);
+    border: 1px solid var(--border);
+    color: var(--text-secondary);
   }
-  .setup-skip:hover { color: var(--text-secondary); }
-  .setup-error {
-    color: var(--danger);
+  .settings-status {
     font-size: 11px;
-    margin-top: 8px;
-    min-height: 16px;
+    font-family: var(--mono);
+    padding: 6px 0;
   }
+  .settings-status.ok { color: var(--accent-archive); }
+  .settings-status.err { color: var(--danger); }
 
   /* ── Export unsaved indicator ── */
   .btn-export.has-changes {
@@ -801,13 +781,14 @@
     <div class="tagline">Live &middot; Vault &middot; Flex &middot; Dump</div>
   </div>
   <div class="header-actions">
-    <div class="sync-bar" id="sync-bar" title="Sync status">
-      <div class="sync-dot off" id="sync-dot"></div>
-      <span id="sync-text">local only</span>
-    </div>
-    <button class="btn-header" onclick="showSetup()" title="Configure cloud sync">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 15a3 3 0 100-6 3 3 0 000 6z"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83 0 2 2 0 010-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 112.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 114 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06a1.65 1.65 0 00-.33 1.82V9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>
+    <span class="sync-status offline" id="sync-status">offline</span>
+    <button class="btn-header" onclick="syncPull()" title="Pull latest from cloud">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M17 8l-5-5-5 5M12 3v12"/></svg>
       <span class="btn-label">Sync</span>
+    </button>
+    <button class="btn-header" onclick="toggleSettings()" title="JSONBin settings">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06a1.65 1.65 0 00-.33 1.82V9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>
+      <span class="btn-label">Settings</span>
     </button>
     <button class="btn-header btn-archive-toggle" onclick="toggleArchive()" title="Toggle archive column">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 8v13H3V8M1 3h22v5H1zM10 12h4"/></svg>
@@ -829,6 +810,29 @@
   </div>
 </div>
 
+<div class="settings-panel" id="settings-panel">
+  <div class="settings-box">
+    <div class="settings-title">Cloud Sync (JSONBin.io)</div>
+    <div class="settings-desc">
+      Free account at <a href="https://jsonbin.io" target="_blank">jsonbin.io</a> &rarr; copy your Master Key from the API Keys page. Leave Bin ID blank on first use &mdash; it will be created automatically.
+    </div>
+    <div class="settings-field">
+      <label class="settings-label">Master Key</label>
+      <input class="settings-input" id="cfg-key" type="password" placeholder="$2a$10$..." autocomplete="off">
+    </div>
+    <div class="settings-field">
+      <label class="settings-label">Bin ID (auto-created if blank)</label>
+      <input class="settings-input" id="cfg-bin" type="text" placeholder="64a1b2c3d4e5f6..." autocomplete="off">
+    </div>
+    <div class="settings-status" id="settings-status"></div>
+    <div class="settings-actions">
+      <button class="btn-settings" onclick="saveSettings()">Save &amp; Connect</button>
+      <button class="btn-settings secondary" onclick="testConnection()">Test</button>
+      <button class="btn-settings secondary" onclick="toggleSettings()">Close</button>
+    </div>
+  </div>
+</div>
+
 <div class="mobile-tabs" id="mobile-tabs">
   <!-- Built by JS -->
 </div>
@@ -844,7 +848,17 @@
 <script>
 (function() {
   var STORE_KEY = 'livelist-data';
-  var SYNC_CFG_KEY = 'livelist-sync-cfg';
+  var CFG_KEY = 'livelist-cfg';
+  var syncTimer = null;
+  var isSyncing = false;
+
+  var cfg = loadCfg();
+  var data = loadData();
+  var draggedCard = null;
+  var archiveVisible = false;
+  var unsavedChanges = 0;
+  var mobileActiveCol = 'live';
+
   var COLUMNS = [
     { id: 'live',    name: 'Live',    accent: 'live',    empty: 'What are you working on right now?' },
     { id: 'vault',   name: 'Vault',   accent: 'vault',   empty: 'Queued up and waiting.' },
@@ -859,42 +873,22 @@
     { value: 'admin', label: 'Admin', cls: 'tag-admin' },
   ];
 
-  var draggedCard = null;
-  var archiveVisible = false;
-  var unsavedChanges = 0;
-  var mobileActiveCol = 'live';
-  var syncCfg = loadSyncCfg();   // { apiKey, binId } or null
-  var syncTimer = null;
-  var pollTimer = null;
-  var lastSyncHash = '';
-  var data = loadData();
-
   function defaultData() {
     return { live: [], vault: [], flex: [], dump: [], archive: [] };
   }
 
-  // ── Sync config persistence ──
-  function loadSyncCfg() {
+  // ── Config persistence ──
+  function loadCfg() {
     try {
-      var raw = localStorage.getItem(SYNC_CFG_KEY);
-      if (raw) { var c = JSON.parse(raw); if (c.apiKey && c.binId) return c; }
-    } catch(e) {}
-    return null;
+      var raw = localStorage.getItem(CFG_KEY);
+      return raw ? JSON.parse(raw) : { masterKey: '', binId: '' };
+    } catch(e) { return { masterKey: '', binId: '' }; }
   }
-  function saveSyncCfg(cfg) {
-    syncCfg = cfg;
-    localStorage.setItem(SYNC_CFG_KEY, JSON.stringify(cfg));
+  function saveCfg() {
+    localStorage.setItem(CFG_KEY, JSON.stringify(cfg));
   }
 
-  // ── Sync status UI ──
-  function setSyncStatus(state, text) {
-    var dot = document.getElementById('sync-dot');
-    var txt = document.getElementById('sync-text');
-    dot.className = 'sync-dot ' + state;
-    txt.textContent = text;
-  }
-
-  // ── Local storage ──
+  // ── Local data ──
   function loadData() {
     try {
       var raw = localStorage.getItem(STORE_KEY);
@@ -905,218 +899,23 @@
     } catch(e) { return defaultData(); }
   }
 
-  function saveLocal() {
-    localStorage.setItem(STORE_KEY, JSON.stringify(data));
-  }
-
-  // ── JSONBin API ──
-  function jsonbinRead(cb) {
-    if (!syncCfg) return cb(null, null);
-    setSyncStatus('busy', 'pulling');
-    fetch('https://api.jsonbin.io/v3/b/' + syncCfg.binId + '/latest', {
-      headers: { 'X-Master-Key': syncCfg.apiKey }
-    }).then(function(r) {
-      if (!r.ok) throw new Error('HTTP ' + r.status);
-      return r.json();
-    }).then(function(json) {
-      var record = json.record || json;
-      setSyncStatus('ok', 'synced');
-      cb(null, record);
-    }).catch(function(err) {
-      setSyncStatus('err', 'pull error');
-      cb(err, null);
-    });
-  }
-
-  function jsonbinWrite(payload, cb) {
-    if (!syncCfg) { if (cb) cb(null); return; }
-    setSyncStatus('busy', 'pushing');
-    fetch('https://api.jsonbin.io/v3/b/' + syncCfg.binId, {
-      method: 'PUT',
-      headers: {
-        'Content-Type': 'application/json',
-        'X-Master-Key': syncCfg.apiKey
-      },
-      body: JSON.stringify(payload)
-    }).then(function(r) {
-      if (!r.ok) throw new Error('HTTP ' + r.status);
-      return r.json();
-    }).then(function() {
-      lastSyncHash = hashData(payload);
-      setSyncStatus('ok', 'synced');
-      if (cb) cb(null);
-    }).catch(function(err) {
-      setSyncStatus('err', 'push error');
-      if (cb) cb(err);
-    });
-  }
-
-  // Simple hash to detect remote changes
-  function hashData(d) {
-    return JSON.stringify(d).length + ':' + JSON.stringify(d).slice(0, 200);
-  }
-
-  // ── Save (local + debounced remote push) ──
   function saveData() {
-    saveLocal();
+    localStorage.setItem(STORE_KEY, JSON.stringify(data));
     unsavedChanges++;
     updateExportIndicator();
     flashSave();
-
-    // Debounce remote push: wait 1.5s after last change
-    if (syncCfg) {
-      clearTimeout(syncTimer);
-      syncTimer = setTimeout(function() {
-        jsonbinWrite(data, function(err) {
-          if (!err) {
-            // Push succeeded
-          }
-        });
-      }, 1500);
-    }
+    debouncedCloudPush();
   }
 
-  // ── Poll for remote changes ──
-  function startPolling() {
-    stopPolling();
-    if (!syncCfg) return;
-    pollTimer = setInterval(function() {
-      jsonbinRead(function(err, remote) {
-        if (err || !remote) return;
-        var remoteHash = hashData(remote);
-        if (remoteHash !== lastSyncHash && remoteHash !== hashData(data)) {
-          // Remote has newer data — merge by replacing
-          COLUMNS.forEach(function(c) { if (!remote[c.id]) remote[c.id] = []; });
-          data = remote;
-          saveLocal();
-          lastSyncHash = remoteHash;
-          render();
-          setSyncStatus('ok', 'synced');
-        }
-      });
-    }, 15000); // Poll every 15 seconds
+  function flashSave() {
+    var el = document.getElementById('save-flash');
+    el.textContent = 'saved';
+    el.style.borderColor = 'var(--accent-complete)';
+    el.style.color = 'var(--accent-complete)';
+    el.classList.add('visible');
+    clearTimeout(el._t);
+    el._t = setTimeout(function() { el.classList.remove('visible'); }, 1200);
   }
-  function stopPolling() {
-    if (pollTimer) { clearInterval(pollTimer); pollTimer = null; }
-  }
-
-  // ── Initial sync on load ──
-  function initialSync() {
-    if (!syncCfg) {
-      setSyncStatus('off', 'local only');
-      return;
-    }
-    setSyncStatus('busy', 'connecting');
-    jsonbinRead(function(err, remote) {
-      if (err) {
-        setSyncStatus('err', 'offline');
-        return;
-      }
-      if (remote && remote.live !== undefined) {
-        // Remote has data — use it
-        COLUMNS.forEach(function(c) { if (!remote[c.id]) remote[c.id] = []; });
-        data = remote;
-        saveLocal();
-        lastSyncHash = hashData(data);
-        render();
-      } else {
-        // Bin is empty — push local data up
-        lastSyncHash = hashData(data);
-        jsonbinWrite(data, null);
-      }
-      startPolling();
-    });
-  }
-
-  // ── Setup UI ──
-  window.showSetup = function() {
-    // Remove existing setup overlay
-    var existing = document.querySelector('.setup-overlay');
-    if (existing) { existing.remove(); return; }
-
-    var ov = document.createElement('div');
-    ov.className = 'setup-overlay';
-    var box = document.createElement('div');
-    box.className = 'setup-box';
-    box.innerHTML = '<h2>Cloud Sync</h2>' +
-      '<p>Sync your board across devices using <a href="https://jsonbin.io" target="_blank">jsonbin.io</a> (free).<br>' +
-      '1. Sign up at jsonbin.io<br>' +
-      '2. Copy your <strong>API Key</strong> from the dashboard<br>' +
-      '3. Create a new bin (paste <code>{}</code> as content), copy the <strong>Bin ID</strong></p>' +
-      '<label>API Key (X-Master-Key)</label>' +
-      '<input type="text" id="setup-apikey" placeholder="$2a$10$..." value="' + (syncCfg ? syncCfg.apiKey : '') + '">' +
-      '<div class="setup-hint">Found in your jsonbin.io dashboard under API Keys</div>' +
-      '<label>Bin ID</label>' +
-      '<input type="text" id="setup-binid" placeholder="64a..." value="' + (syncCfg ? syncCfg.binId : '') + '">' +
-      '<div class="setup-hint">The ID of the bin you created for LiveList</div>' +
-      '<div class="setup-error" id="setup-error"></div>' +
-      '<div class="setup-actions">' +
-        '<button class="setup-save" id="setup-save-btn">Connect</button>' +
-        '<button class="setup-skip" id="setup-skip-btn">Cancel</button>' +
-        (syncCfg ? '<button class="setup-skip" id="setup-disconnect-btn" style="color:var(--danger);border-color:var(--danger)!important;margin-left:auto">Disconnect</button>' : '') +
-      '</div>';
-
-    ov.appendChild(box);
-    document.body.appendChild(ov);
-
-    document.getElementById('setup-save-btn').addEventListener('click', function() {
-      var apiKey = document.getElementById('setup-apikey').value.trim();
-      var binId = document.getElementById('setup-binid').value.trim();
-      var errEl = document.getElementById('setup-error');
-
-      if (!apiKey || !binId) {
-        errEl.textContent = 'Both fields are required.';
-        return;
-      }
-
-      errEl.textContent = 'Testing connection...';
-      // Verify by reading the bin
-      fetch('https://api.jsonbin.io/v3/b/' + binId + '/latest', {
-        headers: { 'X-Master-Key': apiKey }
-      }).then(function(r) {
-        if (!r.ok) throw new Error('HTTP ' + r.status + ' — check your API key and bin ID');
-        return r.json();
-      }).then(function(json) {
-        saveSyncCfg({ apiKey: apiKey, binId: binId });
-        ov.remove();
-
-        // If bin is empty, push current local data
-        var record = json.record || json;
-        if (!record || record.live === undefined) {
-          jsonbinWrite(data, function() {
-            lastSyncHash = hashData(data);
-            startPolling();
-          });
-        } else {
-          COLUMNS.forEach(function(c) { if (!record[c.id]) record[c.id] = []; });
-          data = record;
-          saveLocal();
-          lastSyncHash = hashData(data);
-          render();
-          startPolling();
-        }
-        setSyncStatus('ok', 'synced');
-      }).catch(function(err) {
-        errEl.textContent = 'Connection failed: ' + err.message;
-      });
-    });
-
-    document.getElementById('setup-skip-btn').addEventListener('click', function() { ov.remove(); });
-
-    var dcBtn = document.getElementById('setup-disconnect-btn');
-    if (dcBtn) {
-      dcBtn.addEventListener('click', function() {
-        localStorage.removeItem(SYNC_CFG_KEY);
-        syncCfg = null;
-        stopPolling();
-        setSyncStatus('off', 'local only');
-        ov.remove();
-      });
-    }
-
-    ov.addEventListener('click', function(e) { if (e.target === ov) ov.remove(); });
-    document.getElementById('setup-apikey').focus();
-  };
 
   function updateExportIndicator() {
     var btn = document.getElementById('btn-export');
@@ -1132,19 +931,235 @@
     }
   }
 
-  function flashSave() {
-    var el = document.getElementById('save-flash');
-    el.classList.add('visible');
-    clearTimeout(el._t);
-    el._t = setTimeout(function() { el.classList.remove('visible'); }, 1200);
+  // ── Cloud sync ──
+  function setSyncStatus(state, text) {
+    var el = document.getElementById('sync-status');
+    el.className = 'sync-status ' + state;
+    el.textContent = text || state;
   }
+
+  function isConfigured() {
+    return cfg.masterKey && cfg.binId;
+  }
+
+  function debouncedCloudPush() {
+    if (!isConfigured()) return;
+    clearTimeout(syncTimer);
+    syncTimer = setTimeout(cloudPush, 1500);
+  }
+
+  function cloudPush() {
+    if (!isConfigured() || isSyncing) return;
+    isSyncing = true;
+    setSyncStatus('syncing', 'pushing...');
+
+    fetch('https://api.jsonbin.io/v3/b/' + cfg.binId, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Master-Key': cfg.masterKey
+      },
+      body: JSON.stringify(data)
+    })
+    .then(function(res) {
+      if (!res.ok) throw new Error('HTTP ' + res.status);
+      return res.json();
+    })
+    .then(function() {
+      setSyncStatus('synced', 'synced');
+      isSyncing = false;
+    })
+    .catch(function(err) {
+      setSyncStatus('error', 'sync failed');
+      isSyncing = false;
+      console.error('Cloud push failed:', err);
+    });
+  }
+
+  function cloudPull(callback) {
+    if (!isConfigured()) {
+      if (callback) callback(false);
+      return;
+    }
+    isSyncing = true;
+    setSyncStatus('syncing', 'pulling...');
+
+    fetch('https://api.jsonbin.io/v3/b/' + cfg.binId + '/latest?meta=false', {
+      method: 'GET',
+      headers: {
+        'X-Master-Key': cfg.masterKey
+      }
+    })
+    .then(function(res) {
+      if (!res.ok) throw new Error('HTTP ' + res.status);
+      return res.json();
+    })
+    .then(function(json) {
+      var record = json;
+      if (json.record && typeof json.record === 'object') {
+        record = json.record;
+      }
+      if (record.live !== undefined) {
+        data = record;
+        COLUMNS.forEach(function(c) { if (!data[c.id]) data[c.id] = []; });
+      } else if (record.record && record.record.live !== undefined) {
+        data = record.record;
+        COLUMNS.forEach(function(c) { if (!data[c.id]) data[c.id] = []; });
+      } else {
+        console.warn('Unexpected response structure:', JSON.stringify(json).substring(0, 200));
+      }
+      localStorage.setItem(STORE_KEY, JSON.stringify(data));
+      render();
+      setSyncStatus('synced', 'synced');
+      isSyncing = false;
+      if (callback) callback(true);
+    })
+    .catch(function(err) {
+      setSyncStatus('error', 'pull failed');
+      isSyncing = false;
+      console.error('Cloud pull failed:', err);
+      if (callback) callback(false);
+    });
+  }
+
+  function cloudCreateBin(callback) {
+    if (!cfg.masterKey) { callback(false); return; }
+    setSyncStatus('syncing', 'creating bin...');
+
+    fetch('https://api.jsonbin.io/v3/b', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Master-Key': cfg.masterKey,
+        'X-Bin-Name': 'livelist',
+        'X-Bin-Private': 'true'
+      },
+      body: JSON.stringify(data)
+    })
+    .then(function(res) {
+      if (!res.ok) throw new Error('HTTP ' + res.status);
+      return res.json();
+    })
+    .then(function(json) {
+      var id = json.metadata && json.metadata.id;
+      if (id) {
+        cfg.binId = id;
+        saveCfg();
+        document.getElementById('cfg-bin').value = id;
+        setSyncStatus('synced', 'synced');
+        callback(true);
+      } else {
+        throw new Error('No bin ID returned');
+      }
+    })
+    .catch(function(err) {
+      setSyncStatus('error', 'create failed');
+      console.error('Create bin failed:', err);
+      callback(false);
+    });
+  }
+
+  // ── Settings UI ──
+  window.toggleSettings = function() {
+    var panel = document.getElementById('settings-panel');
+    panel.classList.toggle('open');
+    if (panel.classList.contains('open')) {
+      document.getElementById('cfg-key').value = cfg.masterKey;
+      document.getElementById('cfg-bin').value = cfg.binId;
+      document.getElementById('settings-status').textContent = '';
+    }
+  };
+
+  window.saveSettings = function() {
+    cfg.masterKey = document.getElementById('cfg-key').value.trim();
+    cfg.binId = document.getElementById('cfg-bin').value.trim();
+    saveCfg();
+
+    var statusEl = document.getElementById('settings-status');
+
+    if (!cfg.masterKey) {
+      statusEl.className = 'settings-status err';
+      statusEl.textContent = 'Master Key is required.';
+      setSyncStatus('offline', 'not configured');
+      return;
+    }
+
+    if (!cfg.binId) {
+      statusEl.className = 'settings-status';
+      statusEl.textContent = 'Creating new bin...';
+      cloudCreateBin(function(ok) {
+        if (ok) {
+          statusEl.className = 'settings-status ok';
+          statusEl.textContent = 'Connected! Bin ID: ' + cfg.binId;
+        } else {
+          statusEl.className = 'settings-status err';
+          statusEl.textContent = 'Failed to create bin. Check your Master Key.';
+        }
+      });
+    } else {
+      cloudPull(function(ok) {
+        if (ok) {
+          statusEl.className = 'settings-status ok';
+          statusEl.textContent = 'Connected and synced.';
+        } else {
+          statusEl.className = 'settings-status err';
+          statusEl.textContent = 'Connection failed. Check Key and Bin ID.';
+        }
+      });
+    }
+  };
+
+  window.testConnection = function() {
+    var key = document.getElementById('cfg-key').value.trim();
+    var bin = document.getElementById('cfg-bin').value.trim();
+    var statusEl = document.getElementById('settings-status');
+
+    if (!key || !bin) {
+      statusEl.className = 'settings-status err';
+      statusEl.textContent = 'Enter both fields to test.';
+      return;
+    }
+
+    statusEl.className = 'settings-status';
+    statusEl.textContent = 'Testing...';
+
+    fetch('https://api.jsonbin.io/v3/b/' + bin + '/latest?meta=false', {
+      method: 'GET',
+      headers: { 'X-Master-Key': key }
+    })
+    .then(function(res) {
+      if (!res.ok) throw new Error('HTTP ' + res.status);
+      return res.json();
+    })
+    .then(function(json) {
+      var hasData = !!(json && json.live !== undefined);
+      var taskCount = 0;
+      if (hasData) {
+        COLUMNS.forEach(function(c) {
+          if (json[c.id]) taskCount += json[c.id].length;
+        });
+      }
+      statusEl.className = 'settings-status ok';
+      statusEl.textContent = 'OK — ' + taskCount + ' task(s) found across columns.';
+    })
+    .catch(function(err) {
+      statusEl.className = 'settings-status err';
+      statusEl.textContent = 'Failed: ' + err.message;
+    });
+  };
+
+  window.syncPull = function() {
+    if (!isConfigured()) {
+      toggleSettings();
+      return;
+    }
+    cloudPull();
+  };
 
   // ── Render ──
   function render() {
     var board = document.getElementById('board');
     board.innerHTML = '';
-
-    // Render mobile tabs
     renderMobileTabs();
 
     COLUMNS.forEach(function(colDef) {
@@ -1201,32 +1216,21 @@
     var tabBar = document.getElementById('mobile-tabs');
     if (!tabBar) return;
     tabBar.innerHTML = '';
-
     var accentMap = { live: '--accent-live', vault: '--accent-vault', flex: '--accent-flex', dump: '--accent-dump', archive: '--accent-archive' };
-
     COLUMNS.forEach(function(colDef) {
       if (colDef.id === 'archive' && !archiveVisible) return;
-
       var tab = document.createElement('button');
       tab.className = 'mobile-tab' + (colDef.id === mobileActiveCol ? ' active' : '');
-
       var dot = document.createElement('span');
       dot.className = 'tab-dot';
       dot.style.background = 'var(' + accentMap[colDef.id] + ')';
       tab.appendChild(dot);
-
-      var label = document.createTextNode(colDef.name);
-      tab.appendChild(label);
-
+      tab.appendChild(document.createTextNode(colDef.name));
       var count = document.createElement('span');
       count.className = 'tab-count';
       count.textContent = data[colDef.id].length;
       tab.appendChild(count);
-
-      tab.addEventListener('click', function() {
-        mobileActiveCol = colDef.id;
-        render();
-      });
+      tab.addEventListener('click', function() { mobileActiveCol = colDef.id; render(); });
       tabBar.appendChild(tab);
     });
   }
@@ -1238,21 +1242,16 @@
     card.dataset.col = colId;
     card.dataset.idx = idx;
 
-    // Checkbox
     if (colId !== 'archive') {
       var cb = document.createElement('div');
       cb.className = 'card-checkbox';
       cb.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M5 13l4 4L19 7"/></svg>';
-      cb.addEventListener('click', function(e) {
-        e.stopPropagation();
-        completeTask(colId, idx);
-      });
+      cb.addEventListener('click', function(e) { e.stopPropagation(); completeTask(colId, idx); });
       card.appendChild(cb);
     }
 
     var content = document.createElement('div');
     content.className = 'card-content';
-
     var title = document.createElement('div');
     title.className = 'card-title';
     title.textContent = cardData.title;
@@ -1285,69 +1284,49 @@
     if (meta.children.length) content.appendChild(meta);
     card.appendChild(content);
 
-    // Actions
     if (colId !== 'archive') {
       var actions = document.createElement('div');
       actions.className = 'card-actions';
 
-      // Move button
       var moveBtn = document.createElement('button');
       moveBtn.className = 'card-action-btn move-btn';
       moveBtn.innerHTML = '&#8596;';
       moveBtn.title = 'Move to...';
-      moveBtn.addEventListener('click', function(e) {
-        e.stopPropagation();
-        showMoveMenu(card, colId, idx);
-      });
+      moveBtn.addEventListener('click', function(e) { e.stopPropagation(); showMoveMenu(card, colId, idx); });
       actions.appendChild(moveBtn);
 
       var editBtn = document.createElement('button');
       editBtn.className = 'card-action-btn';
       editBtn.innerHTML = '&#9998;';
       editBtn.title = 'Edit';
-      editBtn.addEventListener('click', function(e) {
-        e.stopPropagation();
-        editCard(colId, idx);
-      });
+      editBtn.addEventListener('click', function(e) { e.stopPropagation(); editCard(colId, idx); });
       actions.appendChild(editBtn);
 
       var delBtn = document.createElement('button');
       delBtn.className = 'card-action-btn delete-btn';
       delBtn.innerHTML = '&times;';
       delBtn.title = 'Delete';
-      delBtn.addEventListener('click', function(e) {
-        e.stopPropagation();
-        deleteCard(colId, idx);
-      });
+      delBtn.addEventListener('click', function(e) { e.stopPropagation(); deleteCard(colId, idx); });
       actions.appendChild(delBtn);
-
       card.appendChild(actions);
     } else {
-      // Archive: restore button
       var actions2 = document.createElement('div');
       actions2.className = 'card-actions';
       var restoreBtn = document.createElement('button');
       restoreBtn.className = 'card-action-btn';
       restoreBtn.innerHTML = '&#8634;';
       restoreBtn.title = 'Restore to Live';
-      restoreBtn.addEventListener('click', function(e) {
-        e.stopPropagation();
-        restoreCard(idx);
-      });
+      restoreBtn.addEventListener('click', function(e) { e.stopPropagation(); restoreCard(idx); });
       actions2.appendChild(restoreBtn);
       var delBtn2 = document.createElement('button');
       delBtn2.className = 'card-action-btn delete-btn';
       delBtn2.innerHTML = '&times;';
       delBtn2.title = 'Delete permanently';
-      delBtn2.addEventListener('click', function(e) {
-        e.stopPropagation();
-        deleteCard('archive', idx);
-      });
+      delBtn2.addEventListener('click', function(e) { e.stopPropagation(); deleteCard('archive', idx); });
       actions2.appendChild(delBtn2);
       card.appendChild(actions2);
     }
 
-    // Drag handlers
     if (colId !== 'archive') {
       card.addEventListener('dragstart', function(e) {
         draggedCard = { col: colId, idx: idx };
@@ -1366,56 +1345,43 @@
     return card;
   }
 
-  // ── Drag & Drop zones ──
+  // ── Drag & Drop ──
   function setupDropZone(body, colId) {
     if (colId === 'archive') return;
-
     body.addEventListener('dragover', function(e) {
       e.preventDefault();
       if (!draggedCard) return;
       e.dataTransfer.dropEffect = 'move';
       body.classList.add('drag-over');
-
       document.querySelectorAll('.drop-preview').forEach(function(p) { p.remove(); });
       var afterIdx = getDropIndex(body, e.clientY);
       var ph = document.createElement('div');
       ph.className = 'card drop-preview';
       ph.style.height = '36px';
-
       var realCards = body.querySelectorAll('.card:not(.dragging):not(.drop-preview)');
       if (afterIdx >= realCards.length) {
         var trigger = body.querySelector('.add-card-trigger');
-        if (trigger) body.insertBefore(ph, trigger);
-        else body.appendChild(ph);
-      } else {
-        body.insertBefore(ph, realCards[afterIdx]);
-      }
+        if (trigger) body.insertBefore(ph, trigger); else body.appendChild(ph);
+      } else { body.insertBefore(ph, realCards[afterIdx]); }
     });
-
     body.addEventListener('dragleave', function(e) {
       if (!body.contains(e.relatedTarget)) {
         body.classList.remove('drag-over');
         body.querySelectorAll('.drop-preview').forEach(function(p) { p.remove(); });
       }
     });
-
     body.addEventListener('drop', function(e) {
       e.preventDefault();
       body.classList.remove('drag-over');
       body.querySelectorAll('.drop-preview').forEach(function(p) { p.remove(); });
       if (!draggedCard) return;
-
-      var fromCol = draggedCard.col;
-      var fromIdx = draggedCard.idx;
-      var toCol = colId;
-      var dropIdx = getDropIndex(body, e.clientY);
-
+      var fromCol = draggedCard.col, fromIdx = draggedCard.idx;
+      var toCol = colId, dropIdx = getDropIndex(body, e.clientY);
       var item = data[fromCol].splice(fromIdx, 1)[0];
       if (fromCol === toCol && fromIdx < dropIdx) dropIdx--;
       data[toCol].splice(dropIdx, 0, item);
       draggedCard = null;
-      saveData();
-      render();
+      saveData(); render();
     });
   }
 
@@ -1428,73 +1394,54 @@
     return cards.length;
   }
 
-  // ── Complete task ──
   function completeTask(colId, idx) {
     var item = data[colId].splice(idx, 1)[0];
     item.completedAt = new Date().toISOString();
     data.archive.unshift(item);
-    saveData();
-    render();
+    saveData(); render();
   }
 
   function restoreCard(idx) {
     var item = data.archive.splice(idx, 1)[0];
     delete item.completedAt;
     data.live.unshift(item);
-    saveData();
-    render();
+    saveData(); render();
   }
 
-  // ── Delete ──
   function deleteCard(colId, idx) {
     data[colId].splice(idx, 1);
-    saveData();
-    render();
+    saveData(); render();
   }
 
   // ── Move menu ──
   function showMoveMenu(cardEl, fromCol, idx) {
     document.querySelectorAll('.move-menu').forEach(function(m) { m.remove(); });
-
     var accentMap = { live: '--accent-live', vault: '--accent-vault', flex: '--accent-flex', dump: '--accent-dump' };
     var menu = document.createElement('div');
     menu.className = 'move-menu';
-
-    var targets = COLUMNS.filter(function(c) { return c.id !== fromCol && c.id !== 'archive'; });
-    targets.forEach(function(colDef) {
+    COLUMNS.filter(function(c) { return c.id !== fromCol && c.id !== 'archive'; }).forEach(function(colDef) {
       var btn = document.createElement('button');
       btn.className = 'move-menu-item';
-
       var dot = document.createElement('span');
       dot.className = 'move-menu-dot';
       dot.style.background = 'var(' + accentMap[colDef.id] + ')';
       btn.appendChild(dot);
-
       btn.appendChild(document.createTextNode(colDef.name));
-
       btn.addEventListener('click', function(e) {
         e.stopPropagation();
         var item = data[fromCol].splice(idx, 1)[0];
         data[colDef.id].push(item);
         mobileActiveCol = colDef.id;
-        saveData();
-        render();
+        saveData(); render();
       });
       menu.appendChild(btn);
     });
-
     cardEl.style.position = 'relative';
     cardEl.appendChild(menu);
-
     function closeMenu(e) {
-      if (!menu.contains(e.target)) {
-        menu.remove();
-        document.removeEventListener('click', closeMenu, true);
-      }
+      if (!menu.contains(e.target)) { menu.remove(); document.removeEventListener('click', closeMenu, true); }
     }
-    setTimeout(function() {
-      document.addEventListener('click', closeMenu, true);
-    }, 10);
+    setTimeout(function() { document.addEventListener('click', closeMenu, true); }, 10);
   }
 
   // ── Edit ──
@@ -1503,10 +1450,8 @@
     var cardEls = document.querySelectorAll('.column-body[data-column="' + colId + '"] .card:not(.drop-preview)');
     var cardEl = cardEls[idx];
     if (!cardEl) return;
-
     var titleEl = cardEl.querySelector('.card-title');
     var descEl = cardEl.querySelector('.card-desc');
-    var contentEl = cardEl.querySelector('.card-content');
     var origTitle = cardData.title;
     var origDesc = cardData.desc || '';
 
@@ -1521,60 +1466,40 @@
     descInput.value = origDesc;
     descInput.placeholder = 'Details (optional)';
     descInput.rows = 1;
-    if (descEl) {
-      descEl.replaceWith(descInput);
-    } else {
-      titleInput.insertAdjacentElement('afterend', descInput);
-    }
+    if (descEl) descEl.replaceWith(descInput);
+    else titleInput.insertAdjacentElement('afterend', descInput);
 
-    titleInput.focus();
-    titleInput.select();
+    titleInput.focus(); titleInput.select();
 
-    function autoResize(el) {
-      el.style.height = 'auto';
-      el.style.height = el.scrollHeight + 'px';
-    }
-    autoResize(titleInput);
-    autoResize(descInput);
+    function autoResize(el) { el.style.height = 'auto'; el.style.height = el.scrollHeight + 'px'; }
+    autoResize(titleInput); autoResize(descInput);
     titleInput.addEventListener('input', function() { autoResize(titleInput); });
     descInput.addEventListener('input', function() { autoResize(descInput); });
 
     var saved = false;
     function save() {
-      if (saved) return;
-      saved = true;
+      if (saved) return; saved = true;
       var tVal = titleInput.value.trim();
       if (tVal) cardData.title = tVal;
       cardData.desc = descInput.value.trim();
-      saveData();
-      render();
+      saveData(); render();
     }
-    function cancel() {
-      if (saved) return;
-      saved = true;
-      cardData.title = origTitle;
-      cardData.desc = origDesc;
-      render();
-    }
+    function cancel() { if (saved) return; saved = true; cardData.title = origTitle; cardData.desc = origDesc; render(); }
 
     titleInput.addEventListener('blur', function() {
       setTimeout(function() {
-        if (!cardEl.contains(document.activeElement) || (document.activeElement !== descInput && document.activeElement !== titleInput)) {
-          save();
-        }
+        if (!cardEl.contains(document.activeElement) || (document.activeElement !== descInput && document.activeElement !== titleInput)) save();
       }, 10);
     });
     descInput.addEventListener('blur', function() {
       setTimeout(function() {
-        if (!cardEl.contains(document.activeElement) || (document.activeElement !== descInput && document.activeElement !== titleInput)) {
-          save();
-        }
+        if (!cardEl.contains(document.activeElement) || (document.activeElement !== descInput && document.activeElement !== titleInput)) save();
       }, 10);
     });
 
     function handleKey(e) {
       if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); save(); }
-      if (e.key === 'Escape') { cancel(); }
+      if (e.key === 'Escape') cancel();
     }
     titleInput.addEventListener('keydown', function(e) {
       if (e.key === 'Tab' && !e.shiftKey) { e.preventDefault(); descInput.focus(); return; }
@@ -1590,83 +1515,50 @@
   function showAddForm(body, colId, triggerBtn) {
     if (body.querySelector('.add-form')) return;
     triggerBtn.style.display = 'none';
-
     var emptyEl = body.querySelector('.empty-state');
     if (emptyEl) emptyEl.remove();
 
     var form = document.createElement('div');
     form.className = 'add-form';
-
     var inp = document.createElement('input');
-    inp.type = 'text';
-    inp.placeholder = 'Task name';
-
+    inp.type = 'text'; inp.placeholder = 'Task name';
     var ta = document.createElement('textarea');
     ta.placeholder = 'Details (optional)';
-
     var row = document.createElement('div');
     row.className = 'form-row';
-
     var sel = document.createElement('select');
     var emptyOpt = document.createElement('option');
-    emptyOpt.value = '';
-    emptyOpt.textContent = 'Tag';
+    emptyOpt.value = ''; emptyOpt.textContent = 'Tag';
     sel.appendChild(emptyOpt);
     TAGS.forEach(function(t) {
       var opt = document.createElement('option');
-      opt.value = t.value;
-      opt.textContent = t.label;
+      opt.value = t.value; opt.textContent = t.label;
       sel.appendChild(opt);
     });
-
     var addB = document.createElement('button');
-    addB.className = 'btn-add';
-    addB.textContent = 'Add';
-
+    addB.className = 'btn-add'; addB.textContent = 'Add';
     var cancelB = document.createElement('button');
-    cancelB.className = 'btn-form-cancel';
-    cancelB.textContent = 'Cancel';
-
-    row.appendChild(sel);
-    row.appendChild(addB);
-    row.appendChild(cancelB);
-
-    form.appendChild(inp);
-    form.appendChild(ta);
-    form.appendChild(row);
-
+    cancelB.className = 'btn-form-cancel'; cancelB.textContent = 'Cancel';
+    row.appendChild(sel); row.appendChild(addB); row.appendChild(cancelB);
+    form.appendChild(inp); form.appendChild(ta); form.appendChild(row);
     body.insertBefore(form, triggerBtn);
     inp.focus();
 
-    function close() {
-      form.remove();
-      triggerBtn.style.display = '';
-      render();
-    }
-
+    function close() { form.remove(); triggerBtn.style.display = ''; render(); }
     function submit() {
       var title = inp.value.trim();
       if (!title) { inp.focus(); return; }
       data[colId].push({
         id: 't-' + Date.now() + '-' + Math.random().toString(36).substr(2, 5),
-        title: title,
-        desc: ta.value.trim(),
-        tag: sel.value,
+        title: title, desc: ta.value.trim(), tag: sel.value,
         createdAt: new Date().toISOString(),
       });
-      saveData();
-      render();
+      saveData(); render();
     }
-
     addB.addEventListener('click', submit);
     cancelB.addEventListener('click', close);
-    inp.addEventListener('keydown', function(e) {
-      if (e.key === 'Enter') submit();
-      if (e.key === 'Escape') close();
-    });
-    ta.addEventListener('keydown', function(e) {
-      if (e.key === 'Escape') close();
-    });
+    inp.addEventListener('keydown', function(e) { if (e.key === 'Enter') submit(); if (e.key === 'Escape') close(); });
+    ta.addEventListener('keydown', function(e) { if (e.key === 'Escape') close(); });
   }
 
   // ── Archive toggle ──
@@ -1691,9 +1583,7 @@
   };
 
   // ── Import ──
-  window.importData = function() {
-    document.getElementById('import-input').click();
-  };
+  window.importData = function() { document.getElementById('import-input').click(); };
   document.getElementById('import-input').addEventListener('change', function(e) {
     var file = e.target.files[0];
     if (!file) return;
@@ -1701,18 +1591,13 @@
     reader.onload = function(ev) {
       try {
         var imported = JSON.parse(ev.target.result);
-        COLUMNS.forEach(function(c) {
-          if (!imported[c.id]) imported[c.id] = [];
-        });
+        COLUMNS.forEach(function(c) { if (!imported[c.id]) imported[c.id] = []; });
         data = imported;
         unsavedChanges = 0;
-        saveData();
-        unsavedChanges = 0;
+        saveData(); unsavedChanges = 0;
         updateExportIndicator();
         render();
-      } catch(err) {
-        alert('Invalid JSON file.');
-      }
+      } catch(err) { alert('Invalid JSON file.'); }
     };
     reader.readAsText(file);
     e.target.value = '';
@@ -1722,8 +1607,7 @@
   window.confirmClearAll = function() {
     showConfirm('This will permanently delete all tasks across every column. Continue?', function() {
       data = defaultData();
-      saveData();
-      render();
+      saveData(); render();
     });
   };
 
@@ -1737,7 +1621,6 @@
       '<button class="confirm-danger">Delete All</button></div>';
     overlay.appendChild(box);
     document.body.appendChild(overlay);
-
     box.querySelector('.confirm-cancel').addEventListener('click', function() { overlay.remove(); });
     box.querySelector('.confirm-danger').addEventListener('click', function() { overlay.remove(); onConfirm(); });
     overlay.addEventListener('click', function(e) { if (e.target === overlay) overlay.remove(); });
@@ -1749,26 +1632,13 @@
     return months[d.getMonth()] + ' ' + d.getDate() + ', ' + d.getFullYear();
   }
 
-  // ── Visibility change: sync when tab becomes active ──
-  document.addEventListener('visibilitychange', function() {
-    if (!document.hidden && syncCfg) {
-      jsonbinRead(function(err, remote) {
-        if (err || !remote || remote.live === undefined) return;
-        var remoteHash = hashData(remote);
-        if (remoteHash !== hashData(data)) {
-          COLUMNS.forEach(function(c) { if (!remote[c.id]) remote[c.id] = []; });
-          data = remote;
-          saveLocal();
-          lastSyncHash = remoteHash;
-          render();
-        }
-      });
-    }
-  });
-
   // ── Init ──
   render();
-  initialSync();
+  if (isConfigured()) {
+    cloudPull();
+  } else {
+    setSyncStatus('offline', 'not configured');
+  }
 })();
 </script>
 
